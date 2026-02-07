@@ -52,52 +52,32 @@ IT342_G1_Monteclaro_Lab1/
 
 ## Features Implemented
 
-### 1. Authentication & Authorization
-- User registration with email validation
-- User login with JWT token generation
-- BCrypt password encryption
-- JWT-based authentication for protected routes
-- Automatic token refresh in API calls
+### Status: ⚠️ Backend Implementation Failed
 
-### 2. Backend API Endpoints
+**Note**: The backend Spring Boot application structure was created but implementation was not completed and is not functional at this time.
 
-#### Authentication Endpoints
-- **POST** `/api/auth/register` - Register a new user
-  - Request: `{ email, password, firstName, lastName }`
-  - Response: Success message or error
-  
-- **POST** `/api/auth/login` - Authenticate user
-  - Request: `{ email, password }`
-  - Response: `{ token, email, firstName, lastName }`
+### 1. Frontend Pages
 
-#### Protected Endpoints
-- **GET** `/api/user/me` - Get current user profile (requires JWT token)
-  - Headers: `Authorization: Bearer <token>`
-  - Response: User information
+#### Register Page (`/register`) - Structure Only
+- First Name input field (created)
+- Last Name input field (created)
+- Email input field (created)
+- Password input field (created)
+- Submit button (created)
+- Link to login page (created)
+- Note: Backend API integration not functional
 
-### 3. Frontend Pages
+#### Login Page (`/login`) - Structure Only
+- Email input field (created)
+- Password input field (created)
+- Submit button (created)
+- Link to register page (created)
+- Note: Backend API integration not functional
 
-#### Register Page (`/register`)
-- First Name input field
-- Last Name input field
-- Email input field
-- Password input field
-- Submit button
-- Link to login page
-- Form validation and error handling
-
-#### Login Page (`/login`)
-- Email input field
-- Password input field
-- Submit button
-- Link to register page
-- Form validation and error handling
-- Automatic redirect to dashboard on successful login
-
-#### Dashboard/Profile Page (`/dashboard`) - Protected
-- User profile information display
-  - First Name
-  - Last Name
+#### Dashboard/Profile Page (`/dashboard`) - Structure Only
+- User profile information display structure created
+  - First Name display
+  - Last Name display
   - Email
 - Logout button
 - Automatic authentication check
