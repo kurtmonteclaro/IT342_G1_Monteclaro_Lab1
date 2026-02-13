@@ -40,7 +40,7 @@ export function Register() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>VetQueue Register</h1>
+        <h1>Register</h1>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
