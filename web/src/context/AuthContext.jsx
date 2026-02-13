@@ -1,9 +1,13 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
+import { authAPI } from '../services/api';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -16,11 +20,40 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    setLoading(false);
-  }, []);
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await authAPI.getCurrentUser();
+        setUser(response.data);
+      } catch (err) {
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    bootstrap();
+  }, [token]);
 
   const login = useCallback((loginData) => {
-    setUser(loginData);
+    setUser({
+      email: loginData.email,
+      firstName: loginData.firstName,
+      lastName: loginData.lastName,
+      role: loginData.role
+    });
     setToken(loginData.token);
   }, []);
 
