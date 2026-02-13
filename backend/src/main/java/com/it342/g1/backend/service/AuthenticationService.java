@@ -5,6 +5,7 @@ import com.it342.g1.backend.dto.LoginResponse;
 import com.it342.g1.backend.dto.RegisterRequest;
 import com.it342.g1.backend.dto.UserDto;
 import com.it342.g1.backend.model.User;
+import com.it342.g1.backend.model.UserRole;
 import com.it342.g1.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        user.setRole(UserRole.CLIENT);
 
         return userRepository.save(user);
     }
@@ -38,6 +40,10 @@ public class AuthenticationService {
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+        if (user.getRole() == null) {
+            user.setRole(UserRole.CLIENT);
+            userRepository.save(user);
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
@@ -50,6 +56,7 @@ public class AuthenticationService {
         response.setEmail(user.getEmail());
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
+        response.setRole(user.getRole().name());
 
         return response;
     }
@@ -63,6 +70,7 @@ public class AuthenticationService {
         dto.setEmail(user.getEmail());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
+        dto.setRole((user.getRole() == null ? UserRole.CLIENT : user.getRole()).name());
 
         return dto;
     }

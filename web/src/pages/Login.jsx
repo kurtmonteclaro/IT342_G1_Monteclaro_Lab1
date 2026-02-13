@@ -41,7 +41,7 @@ export function Login() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Login</h1>
+        <h1>VetQueue Login</h1>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
