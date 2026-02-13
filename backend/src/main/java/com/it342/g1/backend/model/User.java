@@ -29,10 +29,6 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role = UserRole.CLIENT;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
