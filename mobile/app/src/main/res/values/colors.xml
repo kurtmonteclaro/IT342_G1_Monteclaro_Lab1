@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Dark copper theme - matches web -->
+    <color name="background">#0F0F12</color>
+    <color name="surface">#1A1A1E</color>
+    <color name="surface_elevated">#202024</color>
+    <color name="copper">#C67C4E</color>
+    <color name="copper_light">#D4895A</color>
+    <color name="text_primary">#F5F5F5</color>
+    <color name="text_secondary">#A8A8B0</color>
+    <color name="text_muted">#8A8A94</color>
+    <color name="input_bg">#14FFFFFF</color>
+    <color name="border_subtle">#14FFFFFF</color>
+    <color name="error">#FCA5A5</color>
+    <color name="error_bg">#26EF4444</color>
 </resources>

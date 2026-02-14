@@ -15,8 +15,8 @@ interface AuthApiService {
     suspend fun register(@Body body: RegisterRequest): Response<Unit>
 
     @POST("api/auth/login")
-    suspend fun login(@Body body: LoginRequest): LoginResponse
+    suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
 
     @GET("api/user/me")
-    suspend fun me(@Header("Authorization") bearer: String): UserDto
+    suspend fun me(@Header("Authorization") bearer: String): Response<UserDto>
 }

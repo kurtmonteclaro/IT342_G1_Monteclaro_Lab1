@@ -17,27 +17,37 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        val etEmail = findViewById<EditText>(R.id.etEmail)
+        val etUsername = findViewById<EditText>(R.id.etUsername)
         val etPassword = findViewById<EditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvGoRegister = findViewById<TextView>(R.id.tvGoRegister)
 
         btnLogin.setOnClickListener {
-            val email = etEmail.text.toString().trim()
+            val username = etUsername.text.toString().trim()
             val password = etPassword.text.toString().trim()
+
+            if (username.isBlank() || password.isBlank()) {
+                Toast.makeText(this, "Please enter username and password", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             lifecycleScope.launch {
                 try {
-                    val res = RetrofitClient.authApi.login(LoginRequest(email, password))
-                    getSharedPreferences("auth", MODE_PRIVATE).edit()
-                        .putString("token", res.token)
-                        .putString("email", res.email)
-                        .apply()
-
-                    startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
-                    finish()
-                } catch (_: Exception) {
-                    Toast.makeText(this@LoginActivity, "Login failed", Toast.LENGTH_SHORT).show()
+                    val response = RetrofitClient.authApi.login(LoginRequest(username, password))
+                    if (response.isSuccessful) {
+                        val res = response.body()!!
+                        getSharedPreferences("auth", MODE_PRIVATE).edit()
+                            .putString("token", res.token)
+                            .putString("username", res.username)
+                            .apply()
+                        startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
+                        finish()
+                    } else {
+                        val errMsg = response.errorBody()?.string() ?: "Login failed"
+                        Toast.makeText(this@LoginActivity, errMsg, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@LoginActivity, "Login failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

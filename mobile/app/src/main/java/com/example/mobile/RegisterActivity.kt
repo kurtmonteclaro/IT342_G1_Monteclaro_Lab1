@@ -18,6 +18,7 @@ class RegisterActivity : AppCompatActivity() {
 
         val etFirstName = findViewById<EditText>(R.id.etFirstName)
         val etLastName = findViewById<EditText>(R.id.etLastName)
+        val etUsername = findViewById<EditText>(R.id.etUsername)
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
         val btnRegister = findViewById<Button>(R.id.btnRegister)
@@ -25,6 +26,7 @@ class RegisterActivity : AppCompatActivity() {
 
         btnRegister.setOnClickListener {
             val req = RegisterRequest(
+                username = etUsername.text.toString().trim(),
                 email = etEmail.text.toString().trim(),
                 password = etPassword.text.toString().trim(),
                 firstName = etFirstName.text.toString().trim(),
@@ -33,11 +35,16 @@ class RegisterActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    RetrofitClient.authApi.register(req)
-                    Toast.makeText(this@RegisterActivity, "Registered successfully", Toast.LENGTH_SHORT).show()
-                    finish()
-                } catch (_: Exception) {
-                    Toast.makeText(this@RegisterActivity, "Registration failed", Toast.LENGTH_SHORT).show()
+                    val response = RetrofitClient.authApi.register(req)
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@RegisterActivity, "Registered successfully", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        val errMsg = response.errorBody()?.string() ?: "Registration failed"
+                        Toast.makeText(this@RegisterActivity, errMsg, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@RegisterActivity, "Registration failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
