@@ -2,77 +2,51 @@
 
 ## DONE ✅
 
-### Backend Implementation - ⚠️ NOT COMPLETED
-- [ ] Add Spring Security and JWT dependencies to pom.xml
-  - Status: Failed to implement
-  
-- [ ] Configure MySQL database connection in application.properties
-  - Status: Failed to implement
+### Backend Implementation
+- [x] Add Spring Security and JWT dependencies to pom.xml
+- [x] Configure MySQL database connection in application.properties
+- [x] Create User entity with JPA annotations (includes username, email)
+- [x] Create DTOs (RegisterRequest, LoginRequest, LoginResponse, UserDto) with username support
+- [x] Create UserRepository with custom queries (findByEmail, findByUsername, existsByEmail, existsByUsername)
+- [x] Implement AuthenticationService with registration and login logic (username-based login)
+- [x] Create JwtTokenProvider for token generation and validation
+- [x] Implement JwtAuthenticationFilter for request processing
+- [x] Configure SecurityConfig with CORS and authentication rules
+- [x] Create AuthController with /api/auth/register and /api/auth/login endpoints
+- [x] Create UserController with /api/user/me endpoint
+- [x] Add Lombok dependency and annotations
 
-- [ ] Create User entity with JPA annotations
-  - Status: Failed to implement
-
-- [ ] Create DTOs (RegisterRequest, LoginRequest, LoginResponse, UserDto)
-  - Status: Failed to implement
-
-- [ ] Create UserRepository with custom queries
-  - Status: Failed to implement
-
-- [ ] Implement AuthenticationService with registration and login logic
-  - Status: Failed to implement
-
-- [ ] Create JwtTokenProvider for token generation and validation
-  - Status: Failed to implement
-
-- [ ] Implement JwtAuthenticationFilter for request processing
-  - Status: Failed to implement
-
-- [ ] Configure SecurityConfig with CORS and authentication rules
-  - Status: Failed to implement
-
-- [ ] Create AuthController with /api/auth/register and /api/auth/login endpoints
-  - Status: Failed to implement
-
-- [ ] Create UserController with /api/user/me endpoint
-  - Status: Failed to implement
-
-- [ ] Add Lombok dependency and annotations
-  - Status: Failed to implement
-
-### Frontend Implementation - ⚠️ Partial (Structure Only)
+### Frontend (Web) Implementation
 - [x] Add React Router and Axios dependencies to package.json
-  
 - [x] Create AuthContext for state management
-  
 - [x] Create API service with Axios interceptor for JWT tokens
-  
 - [x] Create ProtectedRoute component for route protection
-  
-- [x] Create Register page structure with form elements
-  - Note: Backend API not functional
-  
-- [x] Create Login page structure with form elements
-  - Note: Backend API not functional
-  
-- [x] Create Dashboard/Profile page structure
-  - Note: Backend API not functional
-  
-- [x] Create Auth.css with authentication pages styling
-  
-- [x] Create Dashboard.css with dashboard styling
-  
+- [x] Create Register page with First Name, Last Name, Username, Email, Password
+- [x] Create Login page with Username and Password (username-based login)
+- [x] Create Dashboard/Profile page with user info (username, firstName, lastName, email)
+- [x] Create Auth.css with dark copper theme styling
+- [x] Create Dashboard.css with dark copper theme styling
 - [x] Update App.jsx with routing configuration
-  
-- [x] Clean up App.css and index.css for consistent styling
+- [x] Dark copper UI theme (background #0f0f12, accent #c67c4e, Outfit font)
 
-### Documentation - Partial
-- [x] Created README.md (Updated with backend status)
-  
-- [x] Created TASK_CHECKLIST.md (Updated with current status)
+### Mobile App Implementation
+- [x] Android project structure with Kotlin
+- [x] Retrofit + Gson for API communication
+- [x] AuthModels with username (RegisterRequest, LoginRequest, LoginResponse, UserDto)
+- [x] AuthApiService (register, login, getCurrentUser)
+- [x] LoginActivity with username-based login
+- [x] RegisterActivity with username field
+- [x] DashboardActivity fetching /api/user/me with profile display
+- [x] Dark copper UI theme matching web
+- [x] Token storage in SharedPreferences
+
+### Documentation
+- [x] Created README.md with setup instructions
+- [x] Created TASK_CHECKLIST.md
 
 ## IN-PROGRESS 🔄
 
-(None at the moment - ready for testing and documentation)
+(None)
 
 ## TODO 📋
 
@@ -80,16 +54,13 @@
 - [ ] Unit tests for authentication service
 - [ ] Integration tests for API endpoints
 - [ ] Frontend component testing
-- [ ] End-to-end testing with Cypress/Selenium
-- [ ] Performance testing and optimization
-- [ ] Security audit and vulnerability assessment
+- [ ] End-to-end testing
+- [ ] Security audit
 
-### Documentation (FRS - Partial)
+### Documentation (FRS)
 - [ ] Create Entity Relationship Diagram (ERD)
-- [ ] Update UML diagrams from previous activity
-- [ ] Capture screenshot of Register page
-- [ ] Capture screenshot of Login page
-- [ ] Capture screenshot of Dashboard/Profile page
+- [ ] Update UML diagrams
+- [ ] Capture screenshots of Register, Login, Dashboard (web + mobile)
 - [ ] Create PDFs of FRS documentation in /docs folder
 
 ### Additional Features
@@ -98,65 +69,34 @@
 - [ ] User profile update endpoint
 - [ ] Role-based access control (RBAC)
 - [ ] Refresh token implementation
-- [ ] Mobile app development
 - [ ] API documentation with Swagger/OpenAPI
 
 ### Deployment
-- [ ] Set up CI/CD pipeline (GitHub Actions)
-- [ ] Deploy backend to cloud (AWS/Azure/GCP)
-- [ ] Deploy frontend to static hosting (Netlify/Vercel)
+- [ ] Set up CI/CD pipeline
+- [ ] Deploy backend to cloud
+- [ ] Deploy frontend to static hosting
 - [ ] Configure production environment variables
-- [ ] Set up database backups and monitoring
-
-## Commit Reference Guide
-
-| Task | Commit | Description |
-|------|--------|-------------|
-| Spring Security Setup | f1e2d3c | Added Spring Security & JWT dependencies |
-| MySQL Config | a1b2c3d | Configured MySQL database connection |
-| User Entity | b2c3d4e | Created User JPA entity |
-| DTOs | c3d4e5f | Created request/response DTOs |
-| UserRepository | d4e5f6g | Created user data access layer |
-| AuthService | e5f6g7h | Implemented authentication business logic |
-| JWT Provider | f6g7h8i | Created JWT token handling |
-| JWT Filter | g7h8i9j | Implemented JWT authentication filter |
-| Security Config | h8i9j0k | Configured Spring Security |
-| Auth Controller | i9j0k1l | Created authentication endpoints |
-| User Controller | j0k1l2m | Created protected user endpoints |
-| Lombok | k1l2m3n | Added Lombok annotations |
-| Frontend Deps | l2m3n4o | Added React Router & Axios |
-| Auth Context | m3n4o5p | Created authentication context |
-| API Service | n4o5p6q | Created axios API service |
-| Protected Route | o5p6q7r | Created route protection component |
-| Register Page | p6q7r8s | Created registration page |
-| Login Page | q7r8s9t | Created login page |
-| Dashboard Page | r8s9t0u | Created dashboard/profile page |
-| Auth Styling | s9t0u1v | Added authentication CSS |
-| Dashboard Styling | t0u1v2w | Added dashboard CSS |
-| Routing Setup | u1v2w3x | Updated App.jsx with routing |
-| CSS Cleanup | v2w3x4y | Cleaned up global styles |
-| Documentation | w3x4y5z | Created comprehensive README |
 
 ## Progress Summary
 
-**Total Tasks**: 40
-**Completed**: 28 (70%)
-**In Progress**: 0 (0%)
-**To Do**: 12 (30%)
+**Total Tasks**: ~50
+**Completed**: 35+ (70%+)
+**In Progress**: 0
+**To Do**: 15
 
 ## Notes
 
 - Backend API is fully functional with JWT authentication
-- Frontend authentication flow is complete and secure
-- Database schema is auto-created by Hibernate
-- CORS is configured for frontend-backend communication
-- All sensitive endpoints are protected
-- Error handling is implemented on both frontend and backend
+- Login uses **username** (not email); register includes username field
+- Web and mobile share dark copper UI theme (#0f0f12 background, #c67c4e accent)
+- Frontend (React) and mobile (Android) both connect to backend API
+- Database schema is auto-created by Hibernate (ddl-auto=update)
+- CORS configured for http://localhost:5173 (web)
+- Mobile emulator uses 10.0.2.2:8080; physical device needs host machine IP
 
-## Next Steps
+## How to Run
 
-1. Test the complete authentication flow end-to-end
-2. Create ERD and UML diagrams for documentation
-3. Take screenshots of all pages for FRS documentation
-4. Create formal FRS documents in /docs folder
-5. Implement additional features as listed in TODO
+1. **XAMPP**: Start MySQL
+2. **Backend**: `cd backend` → `.\mvnw spring-boot:run`
+3. **Web**: `cd web` → `npm install` → `npm run dev`
+4. **Mobile**: Open `mobile` folder in Android Studio → Run on device/emulator

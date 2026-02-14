@@ -1,178 +1,156 @@
-"# IT342_G1_Monteclaro_Lab1
+# IT342_G1_Monteclaro_Lab1
 
 ## Project Overview
-This is a full-stack web application consisting of a Spring Boot backend with authentication, a React frontend, and mobile placeholder directory. The application provides user registration, login, and a protected dashboard with user profile information.
+
+Full-stack user registration and authentication application with:
+- **Backend**: Spring Boot REST API with JWT
+- **Web**: React SPA with dark copper theme
+- **Mobile**: Android app (Kotlin) with matching UI
+
+Authentication uses **username** for login (email remains for registration/profile).
 
 ## Technology Stack
 
 ### Backend
-- **Framework**: Spring Boot 4.0.2
-- **Server**: Apache Tomcat
+- **Framework**: Spring Boot
 - **Database**: MySQL 8.0
-- **Security**: Spring Security with JWT (JSON Web Tokens)
+- **Security**: Spring Security + JWT
 - **Password Encryption**: BCrypt
 - **ORM**: Spring Data JPA / Hibernate
 - **Language**: Java 21
 
-### Frontend
-- **Framework**: React 19.2.0
-- **Build Tool**: Vite 7.2.4
-- **Router**: React Router 6.24.0
-- **HTTP Client**: Axios 1.6.0
-- **Styling**: CSS3
+### Frontend (Web)
+- **Framework**: React 19 + Vite
+- **Router**: React Router 6
+- **HTTP Client**: Axios
+- **Styling**: CSS3, dark copper theme (#0f0f12, #c67c4e), Outfit font
+
+### Mobile
+- **Platform**: Android
+- **Language**: Kotlin
+- **HTTP**: Retrofit + Gson
+- **UI**: Material3 Dark, copper accent theme
 
 ## Project Structure
 
 ```
 IT342_G1_Monteclaro_Lab1/
-├── backend/                 # Spring Boot application
-│   ├── src/main/java/      # Source code
-│   │   └── com/it342/g1/backend/
-│   │       ├── controller/ # REST endpoints
-│   │       ├── service/    # Business logic
-│   │       ├── model/      # Entity classes
-│   │       ├── dto/        # Data Transfer Objects
-│   │       ├── repository/ # Data access layer
-│   │       └── security/   # Security configuration
-│   ├── src/main/resources/ # Configuration files
-│   └── pom.xml            # Maven configuration
+├── backend/                 # Spring Boot API
+│   ├── src/main/java/.../
+│   │   ├── controller/     # AuthController, UserController
+│   │   ├── service/        # AuthenticationService, JwtTokenProvider
+│   │   ├── model/          # User entity
+│   │   ├── dto/            # RegisterRequest, LoginRequest, etc.
+│   │   ├── repository/     # UserRepository
+│   │   └── security/       # JWT filter, SecurityConfig
+│   └── src/main/resources/
 ├── web/                    # React application
-│   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── components/    # Reusable components
-│   │   ├── context/       # React context (Auth)
-│   │   ├── services/      # API services
-│   │   └── assets/        # Static assets
-│   └── package.json       # NPM dependencies
-├── mobile/                # Mobile app placeholder
-├── docs/                  # Documentation
-├── README.md             # This file
-└── TASK_CHECKLIST.md     # Task tracking
+│   └── src/
+│       ├── pages/          # Login, Register, Dashboard
+│       ├── context/        # AuthContext
+│       └── services/       # API service
+├── mobile/                 # Android app
+│   └── app/src/main/
+│       ├── java/.../       # LoginActivity, RegisterActivity, DashboardActivity
+│       ├── res/            # layouts, colors, themes
+│       └── network/        # RetrofitClient, AuthApiService
+└── docs/                   # Documentation
 ```
 
 ## Features Implemented
 
-### Status: ⚠️ Backend Implementation Failed
+### Authentication
+- User registration (username, email, firstName, lastName, password)
+- Login with **username** and password
+- JWT token storage (localStorage for web, SharedPreferences for mobile)
+- Protected dashboard with profile info
+- Logout
 
-**Note**: The backend Spring Boot application structure was created but implementation was not completed and is not functional at this time.
+### Pages
+- **Register**: First Name, Last Name, Username, Email, Password
+- **Login**: Username, Password
+- **Dashboard**: Username, First Name, Last Name, Email, Logout
 
-### 1. Frontend Pages
-
-#### Register Page (`/register`)
-- First Name, Last Name, Username, Email, Password fields
-- Submit button (created)
-- Link to login page (created)
-- Note: Backend API integration not functional
-
-#### Login Page (`/login`)
-- Username and Password fields (login uses username, not email)
-- Submit button (created)
-- Link to register page (created)
-- Note: Backend API integration not functional
-
-#### Dashboard/Profile Page (`/dashboard`) - Structure Only
-- User profile information display structure created
-  - First Name display
-  - Last Name display
-  - Email
-- Logout button
-- Automatic authentication check
-
-### 4. Security Features
-- CORS configuration for frontend-backend communication
-- JWT token validation
-- Protected routes using ProtectedRoute component
-- Secure password encryption with BCrypt
-- Token stored in localStorage
-- Automatic token attachment to API requests
+### UI Theme
+- Dark background (#0f0f12)
+- Copper accent (#c67c4e)
+- Outfit font (web)
+- Consistent styling across web and mobile
 
 ## Setup & Installation
 
 ### Prerequisites
-- JDK 21 or higher
+- JDK 21+
 - Node.js 18+ and npm
-- MySQL 8.0+
+- MySQL 8.0 (or XAMPP)
+- Android Studio (for mobile)
 
-### Backend Setup
+### 1. Database (XAMPP)
+1. Start XAMPP Control Panel
+2. Start **MySQL**
+3. Create database: `CREATE DATABASE it342_lab1;` (or via phpMyAdmin)
 
-1. **Configure MySQL Database**
-   ```bash
-   # Create database
-   mysql -u root -p
-   CREATE DATABASE it342_lab1;
-   ```
+### 2. Backend
+```bash
+cd backend
+# Edit application.properties if MySQL password differs
+.\mvnw spring-boot:run
+```
+Backend runs on `http://localhost:8080`
 
-2. **Update Application Configuration**
-   Edit `backend/src/main/resources/application.properties`:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/it342_lab1
-   spring.datasource.username=root
-   spring.datasource.password=your_password
-   ```
+### 3. Web Frontend
+```bash
+cd web
+npm install
+npm run dev
+```
+Web runs on `http://localhost:5173`
 
-3. **Build and Run Backend**
-   ```bash
-   cd backend
-   mvn clean install
-   mvn spring-boot:run
-   ```
-   Backend will start on `http://localhost:8080`
+### 4. Mobile
+1. Open **Android Studio**
+2. **File → Open** → select `mobile` folder
+3. Wait for Gradle sync
+4. Run on emulator or device
 
-### Frontend Setup
+**Note**: For a physical device, ensure it’s on the same network and update the base URL in `RetrofitClient.kt` to your PC’s IP (e.g. `http://192.168.1.x:8080/`). Emulator uses `10.0.2.2:8080`.
 
-1. **Install Dependencies**
-   ```bash
-   cd web
-   npm install
-   ```
+## API Reference
 
-2. **Run Development Server**
-   ```bash
-   npm run dev
-   ```
-   Frontend will start on `http://localhost:5173`
-
-3. **Build for Production**
-   ```bash
-   npm run build
-   ```
-
-## API Testing
-
-### 1. Register a User
+### Register
 ```bash
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "user@example.com",
+    "username": "johndoe",
+    "email": "john@example.com",
     "password": "password123",
     "firstName": "John",
     "lastName": "Doe"
   }'
 ```
 
-### 2. Login
+### Login
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "user@example.com",
+    "username": "johndoe",
     "password": "password123"
   }'
 ```
 
-### 3. Get User Profile (with token)
+### Get Profile (authenticated)
 ```bash
 curl -X GET http://localhost:8080/api/user/me \
-  -H "Authorization: Bearer <your_token_here>"
+  -H "Authorization: Bearer <token>"
 ```
 
 ## Database Schema
 
-### Users Table
 ```sql
 CREATE TABLE users (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(255) UNIQUE NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   first_name VARCHAR(100) NOT NULL,
@@ -181,55 +159,16 @@ CREATE TABLE users (
 );
 ```
 
-## Development Guidelines
-
-### Code Structure
-- **Models**: Entity classes with JPA annotations
-- **DTOs**: Objects for API request/response
-- **Services**: Business logic implementation
-- **Controllers**: REST endpoint handlers
-- **Security**: JWT filter and security configuration
-
-### Commit Strategy
-- Small, descriptive commits
-- Reference task numbers in commit messages
-- One feature per commit when possible
-
 ## Troubleshooting
 
-### Backend Connection Issues
-- Ensure MySQL is running
-- Check database credentials in application.properties
-- Verify port 8080 is available
+| Issue | Solution |
+|-------|----------|
+| MySQL connection failed | Start XAMPP MySQL; verify credentials in `application.properties` |
+| CORS errors | Backend allows `http://localhost:5173`; ensure backend is running |
+| Mobile can't reach API | Emulator: use `10.0.2.2:8080`. Device: use your PC's LAN IP |
+| JWT expired | Tokens last 24 hours; log in again |
 
-### Frontend Connection Issues
-- Ensure backend is running on port 8080
-- Check CORS configuration in SecurityConfig
-- Clear browser cache and localStorage if needed
-
-### JWT Token Issues
-- Token expires after 24 hours
-- Clear localStorage if experiencing authentication issues
-- Check Authorization header format: `Bearer <token>`
-
-## Future Enhancements
-- Email verification for registration
-- Password reset functionality
-- User profile update endpoint
-- Role-based access control (RBAC)
-- Refresh token implementation
-- Mobile app development
-- API documentation with Swagger
-
-## Team Information
+## Team
 - **Group**: G1
 - **Member**: Monteclaro
 - **Subject**: IT342
-
-## License
-MIT License
-
-## Support
-For issues or questions, please create an issue in the repository.
-"
-
