@@ -31,7 +31,14 @@ export function Dashboard() {
   };
 
   if (loading) {
-    return <div className="dashboard-container"><p>Loading...</p></div>;
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -45,6 +52,10 @@ export function Dashboard() {
         <h2>Profile Information</h2>
         {userInfo && (
           <div className="profile-info">
+            <div className="info-item">
+              <label>Username:</label>
+              <p>{userInfo.username}</p>
+            </div>
             <div className="info-item">
               <label>First Name:</label>
               <p>{userInfo.firstName}</p>

@@ -8,7 +8,7 @@ export function Login() {
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -32,7 +32,8 @@ export function Login() {
       auth.login(response.data);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.response?.data || 'Login failed');
+      const msg = err.response?.data;
+      setError(typeof msg === 'string' ? msg : msg?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -45,14 +46,15 @@ export function Login() {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">Username</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
+              autoComplete="username"
             />
           </div>
           <div className="form-group">

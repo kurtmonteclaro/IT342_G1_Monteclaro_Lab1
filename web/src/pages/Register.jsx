@@ -6,6 +6,7 @@ import './Auth.css';
 export function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    username: '',
     email: '',
     password: '',
     firstName: '',
@@ -31,7 +32,8 @@ export function Register() {
       await authAPI.register(formData);
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(err.response?.data || 'Registration failed');
+      const msg = err.response?.data;
+      setError(typeof msg === 'string' ? msg : msg?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,18 @@ export function Register() {
               value={formData.lastName}
               onChange={handleChange}
               required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              autoComplete="username"
             />
           </div>
           <div className="form-group">

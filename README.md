@@ -58,18 +58,14 @@ IT342_G1_Monteclaro_Lab1/
 
 ### 1. Frontend Pages
 
-#### Register Page (`/register`) - Structure Only
-- First Name input field (created)
-- Last Name input field (created)
-- Email input field (created)
-- Password input field (created)
+#### Register Page (`/register`)
+- First Name, Last Name, Username, Email, Password fields
 - Submit button (created)
 - Link to login page (created)
 - Note: Backend API integration not functional
 
-#### Login Page (`/login`) - Structure Only
-- Email input field (created)
-- Password input field (created)
+#### Login Page (`/login`)
+- Username and Password fields (login uses username, not email)
 - Submit button (created)
 - Link to register page (created)
 - Note: Backend API integration not functional
