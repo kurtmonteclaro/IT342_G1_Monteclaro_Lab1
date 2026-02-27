@@ -38,8 +38,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                .requestMatchers("/api/user/**").authenticated()
-                .anyRequest().permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/services").permitAll()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtTokenProvider),

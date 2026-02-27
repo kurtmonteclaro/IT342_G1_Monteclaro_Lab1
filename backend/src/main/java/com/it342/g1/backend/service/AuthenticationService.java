@@ -35,6 +35,11 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        String role = "CLIENT";
+        if (request.getRole() != null && "ADMIN".equalsIgnoreCase(request.getRole())) {
+            role = "ADMIN";
+        }
+        user.setRole(role);
 
         return userRepository.save(user);
     }
@@ -55,6 +60,7 @@ public class AuthenticationService {
         response.setEmail(user.getEmail());
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
+        response.setRole(user.getRole());
 
         return response;
     }
@@ -69,6 +75,7 @@ public class AuthenticationService {
         dto.setEmail(user.getEmail());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
+        dto.setRole(user.getRole());
 
         return dto;
     }
