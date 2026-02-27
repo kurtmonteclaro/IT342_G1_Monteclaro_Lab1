@@ -61,6 +61,26 @@
   transition: all 0.2s ease;
 }
 
+.select-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #f5f5f5;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: rgba(198, 124, 78, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(198, 124, 78, 0.12);
+}
+
 .form-group input::placeholder {
   color: #6b6b75;
 }

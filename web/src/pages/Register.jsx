@@ -11,6 +11,7 @@ export function Register() {
     password: '',
     firstName: '',
     lastName: '',
+    role: 'CLIENT',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,6 +101,19 @@ export function Register() {
               onChange={handleChange}
               required
             />
+          </div>
+          <div className="form-group">
+            <label htmlFor="role">Account Type</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="select-input"
+            >
+              <option value="CLIENT">Pet Owner (Client)</option>
+              <option value="ADMIN">Clinic Admin</option>
+            </select>
           </div>
           <button type="submit" disabled={loading}>
             {loading ? 'Registering...' : 'Register'}
