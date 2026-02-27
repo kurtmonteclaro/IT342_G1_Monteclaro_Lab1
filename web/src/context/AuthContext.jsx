@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
+import { authAPI } from '../services/api';
 
 export const AuthContext = createContext(null);
 
@@ -16,7 +17,18 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    setLoading(false);
+    const hydrate = async () => {
+      try {
+        if (!token) return;
+        const me = await authAPI.getCurrentUser();
+        setUser(me.data);
+      } catch {
+        setUser(null);
+        setToken(null);
+      }
+    };
+
+    hydrate().finally(() => setLoading(false));
   }, []);
 
   const login = useCallback((loginData) => {
