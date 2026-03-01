@@ -13,6 +13,7 @@ export function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,6 +37,23 @@ export function Login() {
       setError(typeof msg === 'string' ? msg : msg?.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    const idToken = window.prompt('Paste Google ID token (for demo)');
+    if (!idToken) return;
+    setGoogleLoading(true);
+    try {
+      const response = await authAPI.loginWithGoogle(idToken);
+      auth.login(response.data);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      const msg = err.response?.data;
+      setError(typeof msg === 'string' ? msg : msg?.message || 'Google login failed');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -72,6 +90,14 @@ export function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        <button
+          type="button"
+          className="google-btn"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+        >
+          {googleLoading ? 'Signing in with Google...' : 'Login with Google'}
+        </button>
         <p className="auth-link">
           Don't have an account? <Link to="/register">Register</Link>
         </p>

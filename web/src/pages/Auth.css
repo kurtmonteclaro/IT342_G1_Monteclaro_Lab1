@@ -128,6 +128,31 @@ button[type="submit"]:disabled {
   transform: none;
 }
 
+.google-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: #ffffff;
+  color: #333;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.google-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.google-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .error-message {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;

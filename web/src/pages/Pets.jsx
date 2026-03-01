@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { petAPI } from '../services/api';
+import { petAPI, externalAPI } from '../services/api';
 import './Vetease.css';
 
 const emptyPet = {
@@ -16,8 +16,12 @@ export function Pets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [breeds, setBreeds] = useState([]);
+  const [breedsLoading, setBreedsLoading] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyPet);
+  const [photoFile, setPhotoFile] = useState(null);
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
   const load = async () => {
@@ -37,9 +41,26 @@ export function Pets() {
     load();
   }, []);
 
+  useEffect(() => {
+    const loadBreeds = async () => {
+      setBreedsLoading(true);
+      try {
+        const res = await externalAPI.dogBreeds();
+        setBreeds(res.data || []);
+      } catch {
+        // fail silently; allow manual breed entry
+        setBreeds([]);
+      } finally {
+        setBreedsLoading(false);
+      }
+    };
+    loadBreeds();
+  }, []);
+
   const startAdd = () => {
     setEditingId(null);
     setForm(emptyPet);
+    setPhotoFile(null);
   };
 
   const startEdit = (pet) => {
@@ -52,6 +73,7 @@ export function Pets() {
       notes: pet.notes || '',
       vaccineHistory: pet.vaccineHistory || '',
     });
+    setPhotoFile(null);
   };
 
   const onChange = (e) => {
@@ -68,9 +90,17 @@ export function Pets() {
     };
     try {
       if (isEditing) {
-        await petAPI.update(editingId, payload);
+        const res = await petAPI.update(editingId, payload);
+        const petId = res.data?.id ?? editingId;
+        if (photoFile) {
+          await petAPI.uploadPhoto(petId, photoFile);
+        }
       } else {
-        await petAPI.create(payload);
+        const res = await petAPI.create(payload);
+        const petId = res.data?.id;
+        if (photoFile && petId) {
+          await petAPI.uploadPhoto(petId, photoFile);
+        }
       }
       await load();
       startAdd();
@@ -78,6 +108,11 @@ export function Pets() {
       const msg = err.response?.data;
       setError(typeof msg === 'string' ? msg : msg?.message || 'Save failed');
     }
+  };
+
+  const onPhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    setPhotoFile(file || null);
   };
 
   const remove = async (id) => {
@@ -126,8 +161,28 @@ export function Pets() {
               </div>
               <div className="ve-field">
                 <label>Breed</label>
-                <input name="breed" value={form.breed} onChange={onChange} placeholder="Shih Tzu..." />
+                {breeds.length > 0 ? (
+                  <select name="breed" value={form.breed} onChange={onChange}>
+                    <option value="">Select breed</option>
+                    {breeds.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    name="breed"
+                    value={form.breed}
+                    onChange={onChange}
+                    placeholder={breedsLoading ? 'Loading breeds...' : 'Shih Tzu...'}
+                  />
+                )}
               </div>
+            </div>
+            <div className="ve-field">
+              <label>Pet Photo (optional)</label>
+              <input type="file" accept="image/*" onChange={onPhotoChange} />
             </div>
             <div className="ve-field">
               <label>Notes</label>
@@ -161,6 +216,13 @@ export function Pets() {
               {pets.map((p) => (
                 <div key={p.id} className="ve-list-item">
                   <div className="ve-list-main">
+                        {p.photoPath && (
+                          <img
+                            src={`http://localhost:8080${p.photoPath}`}
+                            alt={p.name}
+                            className="ve-avatar"
+                          />
+                        )}
                     <div className="ve-list-title">{p.name}</div>
                     <div className="ve-list-meta">
                       {(p.species || 'Pet') + (p.breed ? ` • ${p.breed}` : '')}
