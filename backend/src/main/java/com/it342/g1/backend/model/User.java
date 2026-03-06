@@ -28,6 +28,13 @@ public class User {
     @JsonIgnore
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private AuthProvider authProvider;
+
+    @Column(unique = true)
+    private String googleId;
+
     @Column(nullable = false)
     private String firstName;
 
@@ -45,6 +52,9 @@ public class User {
         createdAt = LocalDateTime.now();
         if (role == null) {
             role = "CLIENT";
+        }
+        if (authProvider == null) {
+            authProvider = AuthProvider.LOCAL;
         }
     }
 }

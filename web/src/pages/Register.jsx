@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { apiConfig, authAPI } from '../services/api';
 import { getErrorMessage } from '../utils/errors';
 import './Auth.css';
 
@@ -17,6 +17,10 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const handleGoogleRegister = () => {
+    window.location.href = `${apiConfig.origin}/oauth2/authorization/google`;
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -133,6 +137,28 @@ export function Register() {
               {loading ? 'Creating account...' : 'Register'}
             </button>
           </form>
+
+          <button className="auth-submit auth-submit--google" onClick={handleGoogleRegister} type="button">
+            <svg aria-hidden="true" className="auth-google-icon" viewBox="0 0 24 24">
+              <path
+                d="M21.805 10.023H12v3.955h5.612c-.242 1.275-.968 2.356-2.063 3.082v2.558h3.34c1.955-1.8 3.084-4.455 3.084-7.618 0-.661-.06-1.297-.168-1.977z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 22c2.7 0 4.962-.895 6.617-2.422l-3.34-2.558c-.926.625-2.11.994-3.277.994-2.518 0-4.65-1.701-5.412-3.986H3.14v2.655A9.998 9.998 0 0012 22z"
+                fill="#34A853"
+              />
+              <path
+                d="M6.588 14.028A5.998 5.998 0 016.286 12c0-.705.12-1.389.302-2.028V7.317H3.14A9.998 9.998 0 002 12c0 1.61.386 3.13 1.14 4.683l3.448-2.655z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.986c1.468 0 2.786.506 3.823 1.5l2.867-2.867C16.958 2.996 14.697 2 12 2A9.998 9.998 0 003.14 7.317l3.448 2.655C7.35 7.687 9.482 5.986 12 5.986z"
+                fill="#EA4335"
+              />
+            </svg>
+            <span className="auth-submit-text">Continue with Google</span>
+          </button>
 
           <p className="auth-switch">
             Already registered? <Link to="/login">Sign in here</Link>.

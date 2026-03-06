@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell';
 import { Register } from './pages/Register';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
+import { OAuthCallback } from './pages/OAuthCallback';
 import { Dashboard } from './pages/Dashboard';
 import { Pets } from './pages/Pets';
 import { Services } from './pages/Services';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route
             element={
               <ProtectedRoute>
