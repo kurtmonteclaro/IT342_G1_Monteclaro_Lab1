@@ -1,107 +1,105 @@
-import { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/auth-context';
 import { authAPI } from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import { getErrorMessage } from '../utils/errors';
 import './Auth.css';
 
 export function Login() {
-  const navigate = useNavigate();
   const auth = useContext(AuthContext);
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
     username: '',
     password: '',
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const response = await authAPI.login(formData);
+      const response = await authAPI.login(form);
       auth.login(response.data);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Login failed');
+      setError(getErrorMessage(err, 'Login failed.'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setError('');
-    const idToken = window.prompt('Paste Google ID token (for demo)');
-    if (!idToken) return;
-    setGoogleLoading(true);
-    try {
-      const response = await authAPI.loginWithGoogle(idToken);
-      auth.login(response.data);
-      navigate('/dashboard', { replace: true });
-    } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Google login failed');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <h1>Login</h1>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              autoComplete="username"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        <button
-          type="button"
-          className="google-btn"
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-        >
-          {googleLoading ? 'Signing in with Google...' : 'Login with Google'}
-        </button>
-        <p className="auth-link">
-          Don't have an account? <Link to="/register">Register</Link>
+    <div className="auth-layout">
+      <section className="auth-panel auth-panel--hero">
+        <div className="auth-kicker">VetEase</div>
+        <h1>Online veterinary scheduling for pet owners and clinic staff.</h1>
+        <p>
+          Log in to manage pet profiles, reserve clinic slots, track appointment statuses, and handle daily schedules
+          from one web dashboard.
         </p>
-      </div>
+        <div className="auth-feature-list">
+          <div className="auth-feature">Verified booking slots based on clinic settings</div>
+          <div className="auth-feature">Role-based dashboard for clients and admins</div>
+          <div className="auth-feature">Pet records and appointment history in one place</div>
+        </div>
+      </section>
+
+      <section className="auth-panel auth-panel--form">
+        <div className="auth-card">
+          <div className="auth-card-head">
+            <div className="auth-kicker">Welcome Back</div>
+            <h2>Sign in to VetEase</h2>
+            <p>Use your VetEase username and password. Google sign-in is not active in the current backend yet.</p>
+          </div>
+
+          {error && <div className="auth-message auth-message--error">{error}</div>}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label className="auth-field">
+              <span>Username</span>
+              <input
+                autoComplete="username"
+                name="username"
+                onChange={handleChange}
+                required
+                type="text"
+                value={form.username}
+              />
+            </label>
+            <label className="auth-field">
+              <span>Password</span>
+              <input
+                autoComplete="current-password"
+                name="password"
+                onChange={handleChange}
+                required
+                type="password"
+                value={form.password}
+              />
+            </label>
+
+            <button className="auth-submit" disabled={loading} type="submit">
+              {loading ? 'Signing in...' : 'Login'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Need an account? <Link to="/register">Create one here</Link>.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

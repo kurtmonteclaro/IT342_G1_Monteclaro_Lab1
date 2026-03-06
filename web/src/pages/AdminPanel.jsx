@@ -1,107 +1,176 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { adminAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { formatDate, formatDateTime, formatStatus, getStatusTone } from '../utils/formatters';
 import './Vetease.css';
 
 export function AdminPanel() {
-  const [today, setToday] = useState([]);
-  const [pending, setPending] = useState([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [pendingAppointments, setPendingAppointments] = useState([]);
   const [settings, setSettings] = useState(null);
   const [blockedDates, setBlockedDates] = useState([]);
-
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [blockDate, setBlockDate] = useState('');
 
-  const load = async () => {
+  const pendingCount = pendingAppointments.length;
+  const confirmedTodayCount = todayAppointments.filter((appointment) => appointment.status === 'CONFIRMED').length;
+  const completedTodayCount = todayAppointments.filter((appointment) => appointment.status === 'COMPLETED').length;
+
+  const sortedBlockedDates = useMemo(
+    () => [...blockedDates].sort((left, right) => left.date.localeCompare(right.date)),
+    [blockedDates],
+  );
+
+  const loadAdminData = async () => {
     setLoading(true);
     setError('');
+
     try {
-      const [t, p, s, b] = await Promise.all([
+      const [todayResponse, pendingResponse, settingsResponse, blockedResponse] = await Promise.all([
         adminAPI.today(),
         adminAPI.pending(),
         adminAPI.getSettings(),
         adminAPI.listBlockedDates(),
       ]);
-      setToday(t.data);
-      setPending(p.data);
-      setSettings(s.data);
-      setBlockedDates(b.data);
-    } catch (e) {
-      setError(e.response?.data?.message || e.response?.data || 'Failed to load admin data');
+
+      setTodayAppointments(todayResponse.data || []);
+      setPendingAppointments(pendingResponse.data || []);
+      setSettings(settingsResponse.data);
+      setBlockedDates(blockedResponse.data || []);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load admin data.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    loadAdminData();
   }, []);
 
-  const act = async (fn) => {
+  const runAdminAction = async (action, successMessage) => {
+    setSaving(true);
     setError('');
+    setSuccess('');
+
     try {
-      await fn();
-      await load();
+      await action();
+      setSuccess(successMessage);
+      await loadAdminData();
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Action failed');
+      setError(getErrorMessage(err, 'Admin action failed.'));
+    } finally {
+      setSaving(false);
     }
   };
 
-  const saveSettings = async () => {
-    if (!settings) return;
-    await act(() => adminAPI.updateSettings(settings));
+  const handleSaveSettings = async () => {
+    await runAdminAction(() => adminAPI.updateSettings(settings), 'Clinic settings updated.');
   };
 
-  const addBlocked = async () => {
-    if (!blockDate) return;
-    await act(() => adminAPI.addBlockedDate(blockDate));
+  const handleAddBlockedDate = async () => {
+    if (!blockDate) {
+      return;
+    }
+
+    await runAdminAction(() => adminAPI.addBlockedDate(blockDate), 'Blocked date added.');
     setBlockDate('');
   };
 
   if (loading) {
     return (
       <div className="ve-page">
-        <p className="ve-muted">Loading...</p>
+        <p className="ve-muted">Loading admin panel...</p>
       </div>
     );
   }
 
   return (
     <div className="ve-page">
-      <div className="ve-header">
+      <section className="ve-hero ve-hero--compact">
         <div>
-          <h1 className="ve-title">Admin Panel</h1>
-          <p className="ve-subtitle">Approve appointments, manage clinic hours, and block dates.</p>
+          <div className="ve-kicker">Admin Control</div>
+          <h2 className="ve-hero-title">Manage request approvals, daily schedules, and clinic availability.</h2>
+          <p className="ve-hero-copy">
+            This panel is connected to the backend appointment and clinic settings endpoints currently implemented in
+            Spring Boot.
+          </p>
         </div>
-      </div>
+      </section>
 
       {error && <div className="ve-alert">{error}</div>}
+      {success && <div className="ve-success">{success}</div>}
 
-      <div className="ve-grid">
-        <div className="ve-card">
-          <h2 className="ve-card-title">Pending Requests</h2>
-          {pending.length === 0 ? (
+      <section className="ve-stats-grid">
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Pending Requests</span>
+          <strong>{pendingCount}</strong>
+          <span className="ve-stat-detail">Appointments awaiting confirmation</span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Today Confirmed</span>
+          <strong>{confirmedTodayCount}</strong>
+          <span className="ve-stat-detail">Ready for clinic service</span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Today Completed</span>
+          <strong>{completedTodayCount}</strong>
+          <span className="ve-stat-detail">Finished appointments today</span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Blocked Dates</span>
+          <strong>{blockedDates.length}</strong>
+          <span className="ve-stat-detail">Clinic closures configured</span>
+        </article>
+      </section>
+
+      <div className="ve-grid ve-grid-main">
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Pending Appointment Requests</h3>
+              <p className="ve-section-copy">Approve or reject future requests waiting on the clinic.</p>
+            </div>
+          </div>
+
+          {pendingAppointments.length === 0 ? (
             <p className="ve-muted">No pending appointments.</p>
           ) : (
             <div className="ve-table">
-              {pending.map((a) => (
-                <div key={a.id} className="ve-rowline">
+              {pendingAppointments.map((appointment) => (
+                <div key={appointment.id} className="ve-rowline">
                   <div className="ve-rowleft">
                     <div className="ve-rowtitle">
-                      {a.time?.slice(0, 5)} • {a.service?.name} • {a.pet?.name}
+                      {appointment.service?.name} for {appointment.pet?.name}
                     </div>
+                    <div className="ve-rowmeta">{formatDateTime(appointment.date, appointment.time)}</div>
                     <div className="ve-rowmeta">
-                      {a.date} • {a.client?.username} ({a.client?.firstName} {a.client?.lastName})
+                      {appointment.client?.firstName} {appointment.client?.lastName} · {appointment.client?.email}
                     </div>
                   </div>
-                  <div className={`ve-status ${a.status?.toLowerCase()}`}>{a.status}</div>
+                  <div className={`ve-status ${getStatusTone(appointment.status)}`}>
+                    {formatStatus(appointment.status)}
+                  </div>
                   <div className="ve-rowactions">
-                    <button className="ve-mini" onClick={() => act(() => adminAPI.confirm(a.id))}>
+                    <button
+                      className="ve-mini"
+                      disabled={saving}
+                      onClick={() =>
+                        runAdminAction(() => adminAPI.confirm(appointment.id), 'Appointment confirmed.')
+                      }
+                    >
                       Confirm
                     </button>
-                    <button className="ve-mini ve-mini-danger" onClick={() => act(() => adminAPI.cancel(a.id))}>
+                    <button
+                      className="ve-mini ve-mini-danger"
+                      disabled={saving}
+                      onClick={() =>
+                        runAdminAction(() => adminAPI.cancel(appointment.id), 'Appointment cancelled.')
+                      }
+                    >
                       Cancel
                     </button>
                   </div>
@@ -109,30 +178,51 @@ export function AdminPanel() {
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="ve-card">
-          <h2 className="ve-card-title">Today’s Schedule</h2>
-          {today.length === 0 ? (
-            <p className="ve-muted">No appointments for today.</p>
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Today&apos;s Schedule</h3>
+              <p className="ve-section-copy">Track active bookings scheduled for today.</p>
+            </div>
+          </div>
+
+          {todayAppointments.length === 0 ? (
+            <p className="ve-muted">No appointments scheduled for today.</p>
           ) : (
             <div className="ve-table">
-              {today.map((a) => (
-                <div key={a.id} className="ve-rowline">
+              {todayAppointments.map((appointment) => (
+                <div key={appointment.id} className="ve-rowline">
                   <div className="ve-rowleft">
                     <div className="ve-rowtitle">
-                      {a.time?.slice(0, 5)} • {a.service?.name} • {a.pet?.name}
+                      {appointment.service?.name} for {appointment.pet?.name}
                     </div>
                     <div className="ve-rowmeta">
-                      {a.client?.username} • {a.client?.email}
+                      {appointment.client?.firstName} {appointment.client?.lastName} · {appointment.client?.username}
                     </div>
+                    {appointment.notes && <div className="ve-rowmeta ve-rowmeta--notes">{appointment.notes}</div>}
                   </div>
-                  <div className={`ve-status ${a.status?.toLowerCase()}`}>{a.status}</div>
+                  <div className={`ve-status ${getStatusTone(appointment.status)}`}>
+                    {formatStatus(appointment.status)}
+                  </div>
                   <div className="ve-rowactions">
-                    <button className="ve-mini" onClick={() => act(() => adminAPI.complete(a.id))} disabled={a.status === 'COMPLETED' || a.status === 'CANCELLED'}>
+                    <button
+                      className="ve-mini"
+                      disabled={saving || appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED'}
+                      onClick={() =>
+                        runAdminAction(() => adminAPI.complete(appointment.id), 'Appointment marked as completed.')
+                      }
+                    >
                       Complete
                     </button>
-                    <button className="ve-mini ve-mini-danger" onClick={() => act(() => adminAPI.cancel(a.id))} disabled={a.status === 'COMPLETED' || a.status === 'CANCELLED'}>
+                    <button
+                      className="ve-mini ve-mini-danger"
+                      disabled={saving || appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED'}
+                      onClick={() =>
+                        runAdminAction(() => adminAPI.cancel(appointment.id), 'Appointment cancelled.')
+                      }
+                    >
                       Cancel
                     </button>
                   </div>
@@ -140,80 +230,122 @@ export function AdminPanel() {
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       <div className="ve-grid ve-grid-2">
-        <div className="ve-card">
-          <h2 className="ve-card-title">Clinic Hours</h2>
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Clinic Settings</h3>
+              <p className="ve-section-copy">Define opening hours and slot generation length.</p>
+            </div>
+          </div>
+
           {!settings ? (
-            <p className="ve-muted">No settings loaded.</p>
+            <p className="ve-muted">No settings available.</p>
           ) : (
             <div className="ve-form">
               <div className="ve-row">
                 <div className="ve-field">
-                  <label>Opening Time</label>
+                  <label htmlFor="openingTime">Opening Time</label>
                   <input
+                    id="openingTime"
                     type="time"
                     value={settings.openingTime?.slice(0, 5) || '09:00'}
-                    onChange={(e) => setSettings((p) => ({ ...p, openingTime: e.target.value }))}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        openingTime: event.target.value,
+                      }))
+                    }
                   />
                 </div>
                 <div className="ve-field">
-                  <label>Closing Time</label>
+                  <label htmlFor="closingTime">Closing Time</label>
                   <input
+                    id="closingTime"
                     type="time"
                     value={settings.closingTime?.slice(0, 5) || '17:00'}
-                    onChange={(e) => setSettings((p) => ({ ...p, closingTime: e.target.value }))}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        closingTime: event.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
-              <div className="ve-row">
-                <div className="ve-field">
-                  <label>Slot Minutes</label>
-                  <input
-                    inputMode="numeric"
-                    value={settings.slotMinutes ?? 30}
-                    onChange={(e) => setSettings((p) => ({ ...p, slotMinutes: Number(e.target.value) }))}
-                  />
-                </div>
+
+              <div className="ve-field">
+                <label htmlFor="slotMinutes">Slot Minutes</label>
+                <input
+                  id="slotMinutes"
+                  min="5"
+                  step="5"
+                  type="number"
+                  value={settings.slotMinutes ?? 30}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      slotMinutes: Number(event.target.value),
+                    }))
+                  }
+                />
               </div>
+
               <div className="ve-actions">
-                <button className="ve-btn ve-btn-primary" onClick={saveSettings}>
+                <button className="ve-btn ve-btn-primary" disabled={saving} onClick={handleSaveSettings} type="button">
                   Save Settings
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="ve-card">
-          <h2 className="ve-card-title">Blocked Dates</h2>
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Blocked Dates</h3>
+              <p className="ve-section-copy">Prevent bookings on holidays and clinic closure dates.</p>
+            </div>
+          </div>
+
           <div className="ve-row">
             <div className="ve-field">
-              <label>Add blocked date</label>
-              <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)} />
+              <label htmlFor="blockDate">New Blocked Date</label>
+              <input id="blockDate" type="date" value={blockDate} onChange={(event) => setBlockDate(event.target.value)} />
             </div>
-            <div className="ve-field ve-field-right">
-              <label>&nbsp;</label>
-              <button className="ve-btn ve-btn-primary" onClick={addBlocked} disabled={!blockDate}>
-                Block
+            <div className="ve-actions">
+              <button
+                className="ve-btn ve-btn-primary"
+                disabled={!blockDate || saving}
+                onClick={handleAddBlockedDate}
+                type="button"
+              >
+                Add Blocked Date
               </button>
             </div>
           </div>
 
-          {blockedDates.length === 0 ? (
-            <p className="ve-muted">No blocked dates.</p>
+          {sortedBlockedDates.length === 0 ? (
+            <p className="ve-muted">No blocked dates configured.</p>
           ) : (
             <div className="ve-list">
-              {blockedDates.map((b) => (
-                <div key={b.id} className="ve-list-item">
-                  <div className="ve-list-main">
-                    <div className="ve-list-title">{b.date}</div>
+              {sortedBlockedDates.map((blockedDate) => (
+                <div key={blockedDate.id} className="ve-list-item">
+                  <div className="ve-list-main ve-list-main--column">
+                    <div className="ve-list-title">{formatDate(blockedDate.date)}</div>
                     <div className="ve-list-meta">Clinic closed</div>
                   </div>
                   <div className="ve-list-actions">
-                    <button className="ve-mini ve-mini-danger" onClick={() => act(() => adminAPI.removeBlockedDate(b.id))}>
+                    <button
+                      className="ve-mini ve-mini-danger"
+                      disabled={saving}
+                      onClick={() =>
+                        runAdminAction(() => adminAPI.removeBlockedDate(blockedDate.id), 'Blocked date removed.')
+                      }
+                    >
                       Remove
                     </button>
                   </div>
@@ -221,9 +353,8 @@ export function AdminPanel() {
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
 }
-

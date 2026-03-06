@@ -1,128 +1,219 @@
-import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { appointmentAPI, authAPI } from '../services/api';
-import './Dashboard.css';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/auth-context';
+import { appointmentAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import {
+  formatDateTime,
+  formatStatus,
+  getStatusTone,
+  isPastAppointment,
+  sortAppointments,
+} from '../utils/formatters';
 import './Vetease.css';
 
 export function Dashboard() {
-  const navigate = useNavigate();
   const auth = useContext(AuthContext);
-  const [userInfo, setUserInfo] = useState(null);
-  const [nextAppointment, setNextAppointment] = useState(null);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const [meRes, apptRes] = await Promise.all([
-          authAPI.getCurrentUser(),
-          appointmentAPI.listMine(),
-        ]);
-        setUserInfo(meRes.data);
+    const loadDashboard = async () => {
+      setLoading(true);
+      setError('');
 
-        const upcoming = (apptRes.data || [])
-          .filter((a) => a.status !== 'CANCELLED' && a.status !== 'COMPLETED')
-          .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))[0];
-        setNextAppointment(upcoming || null);
+      try {
+        const response = await appointmentAPI.listMine();
+        setAppointments(sortAppointments(response.data || []));
       } catch (err) {
-        console.error('Failed to fetch user info:', err);
+        setError(getErrorMessage(err, 'Failed to load your dashboard.'));
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserInfo();
+    loadDashboard();
   }, []);
 
-  const handleLogout = () => {
-    auth.logout();
-    navigate('/login', { replace: true });
-  };
+  const nextAppointment = useMemo(
+    () =>
+      appointments.find(
+        (appointment) =>
+          !isPastAppointment(appointment) &&
+          appointment.status !== 'CANCELLED' &&
+          appointment.status !== 'COMPLETED',
+      ) || null,
+    [appointments],
+  );
 
-  if (loading) {
-    return (
-      <div className="dashboard-container">
-        <div className="dashboard-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  const completedCount = appointments.filter((appointment) => appointment.status === 'COMPLETED').length;
+  const pendingCount = appointments.filter((appointment) => appointment.status === 'PENDING').length;
+  const cancelledCount = appointments.filter((appointment) => appointment.status === 'CANCELLED').length;
+  const recentAppointments = [...appointments].reverse().slice(0, 4);
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <button onClick={handleLogout} className="logout-btn">Logout</button>
-      </div>
-      
-      <div className="ve-grid ve-grid-2">
-        <div className="profile-section">
-          <h2>Next Appointment</h2>
-          {!nextAppointment ? (
-            <p className="ve-muted">No upcoming appointments. Book one to get started.</p>
+    <div className="ve-page">
+      <section className="ve-hero">
+        <div>
+          <div className="ve-kicker">Welcome back</div>
+          <h2 className="ve-hero-title">
+            {auth.user?.firstName || auth.user?.username}, your clinic bookings are all in one place.
+          </h2>
+          <p className="ve-hero-copy">
+            Track upcoming visits, review your appointment history, and reserve verified time slots without
+            calling the clinic.
+          </p>
+        </div>
+        <div className="ve-hero-actions">
+          <Link className="ve-btn ve-btn-primary" to="/appointments/book">
+            Book an Appointment
+          </Link>
+          <Link className="ve-btn ve-btn-ghost" to="/pets">
+            Manage Pets
+          </Link>
+        </div>
+      </section>
+
+      {error && <div className="ve-alert">{error}</div>}
+
+      <section className="ve-stats-grid">
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Upcoming</span>
+          <strong>{nextAppointment ? '1 scheduled' : 'No booking yet'}</strong>
+          <span className="ve-stat-detail">
+            {nextAppointment ? formatDateTime(nextAppointment.date, nextAppointment.time) : 'Reserve your next visit'}
+          </span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Pending Requests</span>
+          <strong>{pendingCount}</strong>
+          <span className="ve-stat-detail">Awaiting clinic approval</span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Completed Visits</span>
+          <strong>{completedCount}</strong>
+          <span className="ve-stat-detail">Past appointments on record</span>
+        </article>
+        <article className="ve-stat-card">
+          <span className="ve-stat-label">Cancelled</span>
+          <strong>{cancelledCount}</strong>
+          <span className="ve-stat-detail">Appointments you can rebook anytime</span>
+        </article>
+      </section>
+
+      <div className="ve-grid ve-grid-main">
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Next Appointment</h3>
+              <p className="ve-section-copy">Your nearest active booking.</p>
+            </div>
+            <Link className="ve-link" to="/appointments">
+              View all
+            </Link>
+          </div>
+
+          {loading ? (
+            <p className="ve-muted">Loading schedule...</p>
+          ) : !nextAppointment ? (
+            <div className="ve-empty">
+              <p>No upcoming appointment yet.</p>
+              <Link className="ve-btn ve-btn-primary" to="/appointments/book">
+                Start Booking
+              </Link>
+            </div>
           ) : (
-            <div className="profile-info">
-              <div className="info-item">
-                <label>Service</label>
-                <p>{nextAppointment.service?.name}</p>
+            <div className="ve-highlight-card">
+              <div className="ve-highlight-row">
+                <span className="ve-highlight-label">Service</span>
+                <strong>{nextAppointment.service?.name}</strong>
               </div>
-              <div className="info-item">
-                <label>Pet</label>
-                <p>{nextAppointment.pet?.name}</p>
+              <div className="ve-highlight-row">
+                <span className="ve-highlight-label">Pet</span>
+                <strong>{nextAppointment.pet?.name}</strong>
               </div>
-              <div className="info-item">
-                <label>Date / Time</label>
-                <p>
-                  {nextAppointment.date} • {nextAppointment.time?.slice(0, 5)}
-                </p>
+              <div className="ve-highlight-row">
+                <span className="ve-highlight-label">Schedule</span>
+                <strong>{formatDateTime(nextAppointment.date, nextAppointment.time)}</strong>
               </div>
-              <div className="info-item">
-                <label>Status</label>
-                <p>{nextAppointment.status}</p>
+              <div className="ve-highlight-row">
+                <span className="ve-highlight-label">Status</span>
+                <span className={`ve-status ${getStatusTone(nextAppointment.status)}`}>
+                  {formatStatus(nextAppointment.status)}
+                </span>
               </div>
+              {nextAppointment.notes && (
+                <div className="ve-highlight-note">
+                  <span className="ve-highlight-label">Notes</span>
+                  <p>{nextAppointment.notes}</p>
+                </div>
+              )}
             </div>
           )}
-          <div className="ve-actions" style={{ marginTop: 18 }}>
-            <button className="ve-btn ve-btn-primary" onClick={() => navigate('/appointments/book')}>
-              Book Appointment
-            </button>
-            <button className="ve-btn ve-btn-ghost" onClick={() => navigate('/appointments')}>
-              View All
-            </button>
+        </section>
+
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Profile Overview</h3>
+              <p className="ve-section-copy">Account details used for your clinic reservations.</p>
+            </div>
+          </div>
+
+          <div className="ve-detail-list">
+            <div className="ve-detail-row">
+              <span>Full Name</span>
+              <strong>
+                {auth.user?.firstName} {auth.user?.lastName}
+              </strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Username</span>
+              <strong>{auth.user?.username}</strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Email</span>
+              <strong>{auth.user?.email}</strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Role</span>
+              <strong>{auth.user?.role}</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="ve-card">
+        <div className="ve-section-head">
+          <div>
+            <h3 className="ve-card-title">Recent Activity</h3>
+            <p className="ve-section-copy">Latest requests and visit history.</p>
           </div>
         </div>
 
-        <div className="profile-section">
-          <h2>Profile Information</h2>
-        {userInfo && (
-          <div className="profile-info">
-            <div className="info-item">
-              <label>Username:</label>
-              <p>{userInfo.username}</p>
-            </div>
-            <div className="info-item">
-              <label>First Name:</label>
-              <p>{userInfo.firstName}</p>
-            </div>
-            <div className="info-item">
-              <label>Last Name:</label>
-              <p>{userInfo.lastName}</p>
-            </div>
-            <div className="info-item">
-              <label>Email:</label>
-              <p>{userInfo.email}</p>
-            </div>
-            <div className="info-item">
-              <label>Role:</label>
-              <p>{userInfo.role}</p>
-            </div>
+        {loading ? (
+          <p className="ve-muted">Loading activity...</p>
+        ) : recentAppointments.length === 0 ? (
+          <p className="ve-muted">No appointment activity yet.</p>
+        ) : (
+          <div className="ve-table">
+            {recentAppointments.map((appointment) => (
+              <div key={appointment.id} className="ve-rowline">
+                <div className="ve-rowleft">
+                  <div className="ve-rowtitle">
+                    {appointment.service?.name} for {appointment.pet?.name}
+                  </div>
+                  <div className="ve-rowmeta">{formatDateTime(appointment.date, appointment.time)}</div>
+                </div>
+                <div className={`ve-status ${getStatusTone(appointment.status)}`}>
+                  {formatStatus(appointment.status)}
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </div>
-      </div>
+      </section>
     </div>
   );
 }

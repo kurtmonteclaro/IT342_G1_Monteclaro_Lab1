@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
 import './Auth.css';
 
 export function Register() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     username: '',
     email: '',
     password: '',
@@ -13,116 +14,131 @@ export function Register() {
     lastName: '',
     role: 'CLIENT',
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      await authAPI.register(formData);
-      navigate('/login', { replace: true });
+      await authAPI.register(form);
+      setSuccess('Account created successfully. Redirecting to login...');
+      window.setTimeout(() => navigate('/login', { replace: true }), 800);
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Registration failed');
+      setError(getErrorMessage(err, 'Registration failed.'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <h1>Register</h1>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              autoComplete="username"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="role">Account Type</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="select-input"
-            >
-              <option value="CLIENT">Pet Owner (Client)</option>
-              <option value="ADMIN">Clinic Admin</option>
-            </select>
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-        <p className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
+    <div className="auth-layout">
+      <section className="auth-panel auth-panel--hero">
+        <div className="auth-kicker">Create Account</div>
+        <h1>Start booking clinic visits online in a few minutes.</h1>
+        <p>
+          Register as a pet owner to manage bookings, or as an admin to review requests, manage schedules, and block
+          clinic dates.
         </p>
-      </div>
+        <div className="auth-feature-list">
+          <div className="auth-feature">Client and admin roles available during sign-up</div>
+          <div className="auth-feature">JWT-secured login backed by Spring Boot</div>
+          <div className="auth-feature">Ready for pet profiles and appointment scheduling</div>
+        </div>
+      </section>
+
+      <section className="auth-panel auth-panel--form">
+        <div className="auth-card auth-card--wide">
+          <div className="auth-card-head">
+            <div className="auth-kicker">Registration</div>
+            <h2>Create your VetEase account</h2>
+            <p>Fill in the required details below. New users can sign in right after registration.</p>
+          </div>
+
+          {error && <div className="auth-message auth-message--error">{error}</div>}
+          {success && <div className="auth-message auth-message--success">{success}</div>}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-row">
+              <label className="auth-field">
+                <span>First Name</span>
+                <input name="firstName" onChange={handleChange} required type="text" value={form.firstName} />
+              </label>
+              <label className="auth-field">
+                <span>Last Name</span>
+                <input name="lastName" onChange={handleChange} required type="text" value={form.lastName} />
+              </label>
+            </div>
+
+            <div className="auth-row">
+              <label className="auth-field">
+                <span>Username</span>
+                <input
+                  autoComplete="username"
+                  name="username"
+                  onChange={handleChange}
+                  required
+                  type="text"
+                  value={form.username}
+                />
+              </label>
+              <label className="auth-field">
+                <span>Email</span>
+                <input
+                  autoComplete="email"
+                  name="email"
+                  onChange={handleChange}
+                  required
+                  type="email"
+                  value={form.email}
+                />
+              </label>
+            </div>
+
+            <div className="auth-row">
+              <label className="auth-field">
+                <span>Password</span>
+                <input
+                  autoComplete="new-password"
+                  name="password"
+                  onChange={handleChange}
+                  required
+                  type="password"
+                  value={form.password}
+                />
+              </label>
+              <label className="auth-field">
+                <span>Role</span>
+                <select name="role" onChange={handleChange} value={form.role}>
+                  <option value="CLIENT">Client</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </label>
+            </div>
+
+            <button className="auth-submit" disabled={loading} type="submit">
+              {loading ? 'Creating account...' : 'Register'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Already registered? <Link to="/login">Sign in here</Link>.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,168 +1,311 @@
 import { useEffect, useMemo, useState } from 'react';
 import { appointmentAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import {
+  formatDate,
+  formatDateTime,
+  formatStatus,
+  formatTime,
+  getStatusTone,
+  getTodayIsoDate,
+  isPastAppointment,
+  sortAppointments,
+} from '../utils/formatters';
 import './Vetease.css';
 
 export function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [rescheduleState, setRescheduleState] = useState({
+    appointmentId: null,
+    serviceId: null,
+    date: '',
+    time: '',
+    slots: [],
+    loading: false,
+  });
 
-  const [rescheduleId, setRescheduleId] = useState(null);
-  const [reschedDate, setReschedDate] = useState('');
-  const [reschedTime, setReschedTime] = useState('');
-  const [reschedSlots, setReschedSlots] = useState([]);
-  const [reschedServiceId, setReschedServiceId] = useState(null);
-
-  const canResched = useMemo(() => rescheduleId && reschedDate && reschedTime, [rescheduleId, reschedDate, reschedTime]);
-
-  const load = async () => {
+  const loadAppointments = async () => {
     setLoading(true);
     setError('');
+
     try {
-      const res = await appointmentAPI.listMine();
-      setAppointments(res.data);
-    } catch (e) {
-      setError(e.response?.data?.message || e.response?.data || 'Failed to load appointments');
+      const response = await appointmentAPI.listMine();
+      setAppointments(sortAppointments(response.data || []));
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load appointments.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    loadAppointments();
   }, []);
 
-  const cancel = async (id) => {
-    setError('');
+  const upcomingAppointments = useMemo(
+    () =>
+      appointments.filter(
+        (appointment) =>
+          !isPastAppointment(appointment) &&
+          appointment.status !== 'COMPLETED' &&
+          appointment.status !== 'CANCELLED',
+      ),
+    [appointments],
+  );
+
+  const historyAppointments = useMemo(
+    () =>
+      [...appointments]
+        .filter(
+          (appointment) =>
+            appointment.status === 'COMPLETED' ||
+            appointment.status === 'CANCELLED' ||
+            isPastAppointment(appointment),
+        )
+        .reverse(),
+    [appointments],
+  );
+
+  const loadRescheduleSlots = async (date, serviceId) => {
+    if (!date || !serviceId) {
+      return;
+    }
+
+    setRescheduleState((current) => ({
+      ...current,
+      loading: true,
+      slots: [],
+    }));
+
     try {
-      await appointmentAPI.cancel(id);
-      await load();
+      const response = await appointmentAPI.availability({ date, serviceId });
+      setRescheduleState((current) => ({
+        ...current,
+        loading: false,
+        slots: response.data || [],
+      }));
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Cancel failed');
+      setError(getErrorMessage(err, 'Failed to load available slots for rescheduling.'));
+      setRescheduleState((current) => ({
+        ...current,
+        loading: false,
+        slots: [],
+      }));
     }
   };
 
-  const openReschedule = async (appt) => {
-    setRescheduleId(appt.id);
-    setReschedDate(appt.date);
-    setReschedTime('');
-    setReschedServiceId(appt.service?.id);
-    try {
-      const res = await appointmentAPI.availability({ date: appt.date, serviceId: appt.service?.id });
-      setReschedSlots(res.data);
-    } catch {
-      setReschedSlots([]);
-    }
-  };
-
-  const refreshReschedSlots = async () => {
-    if (!reschedDate || !reschedServiceId) return;
-    const res = await appointmentAPI.availability({ date: reschedDate, serviceId: reschedServiceId });
-    setReschedSlots(res.data);
+  const openReschedule = async (appointment) => {
+    setSuccess('');
+    setError('');
+    setRescheduleState({
+      appointmentId: appointment.id,
+      serviceId: appointment.service?.id,
+      date: appointment.date,
+      time: '',
+      slots: [],
+      loading: false,
+    });
   };
 
   useEffect(() => {
-    if (rescheduleId && reschedDate && reschedServiceId) refreshReschedSlots();
-  }, [reschedDate, reschedServiceId, rescheduleId]);
+    if (rescheduleState.appointmentId && rescheduleState.date && rescheduleState.serviceId) {
+      loadRescheduleSlots(rescheduleState.date, rescheduleState.serviceId);
+    }
+  }, [rescheduleState.appointmentId, rescheduleState.date, rescheduleState.serviceId]);
 
-  const doReschedule = async () => {
+  const handleCancel = async (appointmentId) => {
     setError('');
+    setSuccess('');
+
     try {
-      await appointmentAPI.reschedule(rescheduleId, { date: reschedDate, time: reschedTime });
-      setRescheduleId(null);
-      setReschedTime('');
-      await load();
+      await appointmentAPI.cancel(appointmentId);
+      setSuccess('Appointment cancelled.');
+      await loadAppointments();
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Reschedule failed');
+      setError(getErrorMessage(err, 'Failed to cancel appointment.'));
     }
   };
+
+  const handleReschedule = async () => {
+    setError('');
+    setSuccess('');
+
+    try {
+      await appointmentAPI.reschedule(rescheduleState.appointmentId, {
+        date: rescheduleState.date,
+        time: rescheduleState.time,
+      });
+      setSuccess('Appointment rescheduled and returned to pending status.');
+      setRescheduleState({
+        appointmentId: null,
+        serviceId: null,
+        date: '',
+        time: '',
+        slots: [],
+        loading: false,
+      });
+      await loadAppointments();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to reschedule appointment.'));
+    }
+  };
+
+  const renderAppointmentCard = (appointment, mode) => (
+    <div key={appointment.id} className="ve-rowline">
+      <div className="ve-rowleft">
+        <div className="ve-rowtitle">
+          {appointment.service?.name} for {appointment.pet?.name}
+        </div>
+        <div className="ve-rowmeta">{formatDateTime(appointment.date, appointment.time)}</div>
+        {appointment.notes && <div className="ve-rowmeta ve-rowmeta--notes">{appointment.notes}</div>}
+      </div>
+      <div className={`ve-status ${getStatusTone(appointment.status)}`}>{formatStatus(appointment.status)}</div>
+      {mode === 'upcoming' && (
+        <div className="ve-rowactions">
+          <button className="ve-mini" onClick={() => openReschedule(appointment)}>
+            Reschedule
+          </button>
+          <button className="ve-mini ve-mini-danger" onClick={() => handleCancel(appointment.id)}>
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="ve-page">
       <div className="ve-header">
         <div>
-          <h1 className="ve-title">My Appointments</h1>
-          <p className="ve-subtitle">Track status, cancel, or reschedule when needed.</p>
+          <h2 className="ve-title">My Appointments</h2>
+          <p className="ve-subtitle">Review upcoming reservations, past visits, and any cancellations.</p>
         </div>
       </div>
 
       {error && <div className="ve-alert">{error}</div>}
+      {success && <div className="ve-success">{success}</div>}
 
-      <div className="ve-card">
-        {loading ? (
-          <p className="ve-muted">Loading...</p>
-        ) : appointments.length === 0 ? (
-          <p className="ve-muted">No appointments yet.</p>
-        ) : (
-          <div className="ve-table">
-            {appointments.map((a) => (
-              <div key={a.id} className="ve-rowline">
-                <div className="ve-rowleft">
-                  <div className="ve-rowtitle">
-                    {a.service?.name} • {a.pet?.name}
-                  </div>
-                  <div className="ve-rowmeta">
-                    {a.date} at {a.time?.slice(0, 5)}
-                  </div>
-                </div>
-                <div className={`ve-status ${a.status?.toLowerCase()}`}>{a.status}</div>
-                <div className="ve-rowactions">
-                  <button className="ve-mini" onClick={() => openReschedule(a)} disabled={a.status === 'COMPLETED' || a.status === 'CANCELLED'}>
-                    Reschedule
-                  </button>
-                  <button className="ve-mini ve-mini-danger" onClick={() => cancel(a.id)} disabled={a.status === 'COMPLETED' || a.status === 'CANCELLED'}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ))}
+      <div className="ve-grid ve-grid-main">
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Upcoming</h3>
+              <p className="ve-section-copy">Appointments that can still be cancelled or moved.</p>
+            </div>
           </div>
-        )}
+
+          {loading ? (
+            <p className="ve-muted">Loading appointments...</p>
+          ) : upcomingAppointments.length === 0 ? (
+            <p className="ve-muted">No upcoming appointments.</p>
+          ) : (
+            <div className="ve-table">{upcomingAppointments.map((appointment) => renderAppointmentCard(appointment, 'upcoming'))}</div>
+          )}
+        </section>
+
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">History</h3>
+              <p className="ve-section-copy">Completed, cancelled, and older appointments.</p>
+            </div>
+          </div>
+
+          {loading ? (
+            <p className="ve-muted">Loading history...</p>
+          ) : historyAppointments.length === 0 ? (
+            <p className="ve-muted">No historical appointments yet.</p>
+          ) : (
+            <div className="ve-table">{historyAppointments.map((appointment) => renderAppointmentCard(appointment, 'history'))}</div>
+          )}
+        </section>
       </div>
 
-      {rescheduleId && (
-        <div className="ve-card ve-card-tight">
-          <h2 className="ve-card-title">Reschedule</h2>
-          <div className="ve-form">
-            <div className="ve-row">
-              <div className="ve-field">
-                <label>Date</label>
-                <input type="date" value={reschedDate} onChange={(e) => setReschedDate(e.target.value)} />
-              </div>
-              <div className="ve-field">
-                <label>Time Slot</label>
-                <div className="ve-slots">
-                  {reschedSlots.length === 0 ? (
-                    <div className="ve-muted">No open slots.</div>
-                  ) : (
-                    reschedSlots.map((s) => (
-                      <button
-                        type="button"
-                        key={s}
-                        className={`ve-slot ${reschedTime === s ? 'active' : ''}`}
-                        onClick={() => setReschedTime(s)}
-                      >
-                        {s.slice(0, 5)}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="ve-actions">
-              <button className="ve-btn ve-btn-primary" onClick={doReschedule} disabled={!canResched}>
-                Confirm Reschedule
-              </button>
-              <button className="ve-btn ve-btn-ghost" onClick={() => setRescheduleId(null)}>
-                Close
-              </button>
+      {rescheduleState.appointmentId && (
+        <section className="ve-card ve-card-tight">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Reschedule Appointment</h3>
+              <p className="ve-section-copy">Choose a new date and slot. Rescheduled appointments go back to pending.</p>
             </div>
           </div>
-        </div>
+
+          <div className="ve-row">
+            <div className="ve-field">
+              <label htmlFor="reschedule-date">New Date</label>
+              <input
+                id="reschedule-date"
+                min={getTodayIsoDate()}
+                type="date"
+                value={rescheduleState.date}
+                onChange={(event) =>
+                  setRescheduleState((current) => ({
+                    ...current,
+                    date: event.target.value,
+                    time: '',
+                  }))
+                }
+              />
+            </div>
+            <div className="ve-field">
+              <label>Available Slots</label>
+              <div className="ve-slots">
+                {rescheduleState.loading ? (
+                  <span className="ve-muted">Checking available slots...</span>
+                ) : rescheduleState.slots.length === 0 ? (
+                  <span className="ve-muted">No available slots for {formatDate(rescheduleState.date)}.</span>
+                ) : (
+                  rescheduleState.slots.map((slot) => (
+                    <button
+                      key={slot}
+                      className={`ve-slot ${rescheduleState.time === slot ? 'active' : ''}`}
+                      onClick={() =>
+                        setRescheduleState((current) => ({
+                          ...current,
+                          time: slot,
+                        }))
+                      }
+                      type="button"
+                    >
+                      {formatTime(slot)}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="ve-actions">
+            <button
+              className="ve-btn ve-btn-primary"
+              disabled={!rescheduleState.date || !rescheduleState.time}
+              onClick={handleReschedule}
+              type="button"
+            >
+              Confirm Reschedule
+            </button>
+            <button
+              className="ve-btn ve-btn-ghost"
+              onClick={() =>
+                setRescheduleState({
+                  appointmentId: null,
+                  serviceId: null,
+                  date: '',
+                  time: '',
+                  slots: [],
+                  loading: false,
+                })
+              }
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+        </section>
       )}
     </div>
   );
 }
-

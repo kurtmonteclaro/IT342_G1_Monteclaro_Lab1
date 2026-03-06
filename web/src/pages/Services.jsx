@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { serviceAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
 import './Vetease.css';
 
 export function Services() {
@@ -8,54 +10,59 @@ export function Services() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const load = async () => {
+    const loadServices = async () => {
       setLoading(true);
       setError('');
+
       try {
-        const res = await serviceAPI.listActive();
-        setServices(res.data);
-      } catch (e) {
-        setError(e.response?.data?.message || e.response?.data || 'Failed to load services');
+        const response = await serviceAPI.listActive();
+        setServices(response.data || []);
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to load clinic services.'));
       } finally {
         setLoading(false);
       }
     };
-    load();
+
+    loadServices();
   }, []);
 
   return (
     <div className="ve-page">
-      <div className="ve-header">
+      <section className="ve-hero ve-hero--compact">
         <div>
-          <h1 className="ve-title">Clinic Services</h1>
-          <p className="ve-subtitle">Choose a service, then book an available time slot.</p>
+          <div className="ve-kicker">Available Services</div>
+          <h2 className="ve-hero-title">Choose the type of care your pet needs before reserving a time slot.</h2>
+          <p className="ve-hero-copy">
+            Services are loaded directly from the clinic catalog so the booking page stays aligned with the backend.
+          </p>
         </div>
-      </div>
+        <Link className="ve-btn ve-btn-primary" to="/appointments/book">
+          Go to Booking
+        </Link>
+      </section>
 
       {error && <div className="ve-alert">{error}</div>}
 
       {loading ? (
-        <p className="ve-muted">Loading...</p>
+        <p className="ve-muted">Loading services...</p>
       ) : services.length === 0 ? (
-        <p className="ve-muted">No services configured yet.</p>
+        <p className="ve-muted">No active services are configured yet.</p>
       ) : (
         <div className="ve-cards">
-          {services.map((s) => (
-            <div key={s.id} className="ve-service">
+          {services.map((service) => (
+            <article key={service.id} className="ve-service">
               <div className="ve-service-top">
-                <div className="ve-service-title">{s.name}</div>
-                {s.durationMinutes ? (
-                  <div className="ve-chip">{s.durationMinutes} min</div>
-                ) : (
-                  <div className="ve-chip">—</div>
-                )}
+                <div>
+                  <div className="ve-service-title">{service.name}</div>
+                  <div className="ve-service-desc">{service.description || 'No description provided yet.'}</div>
+                </div>
+                <span className="ve-chip">{service.durationMinutes || 0} min</span>
               </div>
-              <div className="ve-service-desc">{s.description || 'No description provided.'}</div>
-            </div>
+            </article>
           ))}
         </div>
       )}
     </div>
   );
 }
-

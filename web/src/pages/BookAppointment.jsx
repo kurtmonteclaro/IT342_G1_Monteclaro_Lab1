@@ -1,85 +1,150 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { appointmentAPI, petAPI, serviceAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { formatDateTime, formatTime, getTodayIsoDate } from '../utils/formatters';
 import './Vetease.css';
 
 export function BookAppointment() {
+  const navigate = useNavigate();
   const [pets, setPets] = useState([]);
   const [services, setServices] = useState([]);
   const [slots, setSlots] = useState([]);
-
   const [loading, setLoading] = useState(true);
+  const [slotLoading, setSlotLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [form, setForm] = useState({
+    petId: '',
+    serviceId: '',
+    date: '',
+    time: '',
+    notes: '',
+  });
 
-  const [petId, setPetId] = useState('');
-  const [serviceId, setServiceId] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [notes, setNotes] = useState('');
-
-  const canCheck = useMemo(() => date && serviceId, [date, serviceId]);
-  const canSubmit = useMemo(() => petId && serviceId && date && time, [petId, serviceId, date, time]);
+  const selectedPet = pets.find((pet) => String(pet.id) === form.petId);
+  const selectedService = services.find((service) => String(service.id) === form.serviceId);
+  const canCheckAvailability = Boolean(form.date && form.serviceId);
+  const canSubmit = Boolean(form.petId && form.serviceId && form.date && form.time);
 
   useEffect(() => {
-    const load = async () => {
+    const loadBookingData = async () => {
       setLoading(true);
       setError('');
+
       try {
-        const [pRes, sRes] = await Promise.all([petAPI.listMine(), serviceAPI.listActive()]);
-        setPets(pRes.data);
-        setServices(sRes.data);
-      } catch (e) {
-        setError(e.response?.data?.message || e.response?.data || 'Failed to load booking data');
+        const [petResponse, serviceResponse] = await Promise.all([petAPI.listMine(), serviceAPI.listActive()]);
+        setPets(petResponse.data || []);
+        setServices(serviceResponse.data || []);
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to load booking form data.'));
       } finally {
         setLoading(false);
       }
     };
-    load();
+
+    loadBookingData();
   }, []);
 
-  const checkAvailability = async () => {
-    if (!canCheck) return;
-    setError('');
-    setSuccess('');
-    setTime('');
-    try {
-      const res = await appointmentAPI.availability({ date, serviceId });
-      setSlots(res.data);
-    } catch (e) {
-      setError(e.response?.data?.message || e.response?.data || 'Failed to check availability');
+  const loadAvailability = async (date, serviceId) => {
+    if (!date || !serviceId) {
       setSlots([]);
+      return;
+    }
+
+    setSlotLoading(true);
+    setError('');
+
+    try {
+      const response = await appointmentAPI.availability({ date, serviceId });
+      setSlots(response.data || []);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load available time slots.'));
+      setSlots([]);
+    } finally {
+      setSlotLoading(false);
     }
   };
 
   useEffect(() => {
-    if (canCheck) checkAvailability();
-  }, [date, serviceId]);
+    setForm((current) => ({
+      ...current,
+      time: '',
+    }));
 
-  const submit = async (e) => {
-    e.preventDefault();
+    if (form.date && form.serviceId) {
+      loadAvailability(form.date, form.serviceId);
+    } else {
+      setSlots([]);
+    }
+  }, [form.date, form.serviceId]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     setError('');
     setSuccess('');
+
     try {
       await appointmentAPI.create({
-        petId: Number(petId),
-        serviceId: Number(serviceId),
-        date,
-        time,
-        notes,
+        petId: Number(form.petId),
+        serviceId: Number(form.serviceId),
+        date: form.date,
+        time: form.time,
+        notes: form.notes,
       });
-      setSuccess('Appointment request submitted. Status: Pending.');
-      setNotes('');
-      await checkAvailability();
+
+      setSuccess('Appointment request submitted with pending status.');
+      setForm((current) => ({
+        ...current,
+        time: '',
+        notes: '',
+      }));
+      await loadAvailability(form.date, form.serviceId);
+      window.setTimeout(() => navigate('/appointments'), 700);
     } catch (err) {
-      const msg = err.response?.data;
-      setError(typeof msg === 'string' ? msg : msg?.message || 'Booking failed');
+      setError(getErrorMessage(err, 'Booking failed.'));
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const bookingSummary = useMemo(() => {
+    if (!selectedPet || !selectedService || !form.date || !form.time) {
+      return 'Select a pet, service, date, and slot to preview the reservation.';
+    }
+
+    return `${selectedPet.name} is set for ${selectedService.name} on ${formatDateTime(form.date, form.time)}.`;
+  }, [form.date, form.time, selectedPet, selectedService]);
 
   if (loading) {
     return (
       <div className="ve-page">
-        <p className="ve-muted">Loading...</p>
+        <p className="ve-muted">Loading booking form...</p>
+      </div>
+    );
+  }
+
+  if (pets.length === 0) {
+    return (
+      <div className="ve-page">
+        <section className="ve-card ve-empty ve-empty--large">
+          <h2 className="ve-card-title">Add a pet before booking</h2>
+          <p className="ve-muted">Appointments are tied to a pet profile, so create one first.</p>
+          <Link className="ve-btn ve-btn-primary" to="/pets">
+            Go to Pet Profiles
+          </Link>
+        </section>
       </div>
     );
   }
@@ -88,83 +153,149 @@ export function BookAppointment() {
     <div className="ve-page">
       <div className="ve-header">
         <div>
-          <h1 className="ve-title">Book Appointment</h1>
-          <p className="ve-subtitle">Pick a pet, choose a service, and reserve an available time slot.</p>
+          <h2 className="ve-title">Book Appointment</h2>
+          <p className="ve-subtitle">
+            Reserve only from generated open slots so your request stays aligned with clinic availability.
+          </p>
         </div>
       </div>
 
       {error && <div className="ve-alert">{error}</div>}
       {success && <div className="ve-success">{success}</div>}
 
-      <div className="ve-card">
-        <form onSubmit={submit} className="ve-form">
-          <div className="ve-row">
-            <div className="ve-field">
-              <label>Pet</label>
-              <select value={petId} onChange={(e) => setPetId(e.target.value)}>
-                <option value="">Select a pet</option>
-                {pets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="ve-field">
-              <label>Service</label>
-              <select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
-                <option value="">Select a service</option>
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+      <div className="ve-grid ve-grid-main">
+        <section className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Reservation Details</h3>
+              <p className="ve-section-copy">Choose a pet, service, date, and verified time slot.</p>
             </div>
           </div>
 
-          <div className="ve-row">
-            <div className="ve-field">
-              <label>Date</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
-            <div className="ve-field">
-              <label>Time Slot</label>
-              <div className="ve-slots">
-                {canCheck && slots.length === 0 ? (
-                  <div className="ve-muted">No open slots.</div>
-                ) : (
-                  slots.map((s) => (
-                    <button
-                      type="button"
-                      key={s}
-                      className={`ve-slot ${time === s ? 'active' : ''}`}
-                      onClick={() => setTime(s)}
-                    >
-                      {s.slice(0, 5)}
-                    </button>
-                  ))
-                )}
+          <form className="ve-form" onSubmit={handleSubmit}>
+            <div className="ve-row">
+              <div className="ve-field">
+                <label htmlFor="petId">Pet</label>
+                <select id="petId" name="petId" value={form.petId} onChange={handleChange}>
+                  <option value="">Select a pet</option>
+                  {pets.map((pet) => (
+                    <option key={pet.id} value={pet.id}>
+                      {pet.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="ve-field">
+                <label htmlFor="serviceId">Service</label>
+                <select id="serviceId" name="serviceId" value={form.serviceId} onChange={handleChange}>
+                  <option value="">Select a service</option>
+                  {services.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
+
+            <div className="ve-row">
+              <div className="ve-field">
+                <label htmlFor="date">Date</label>
+                <input
+                  id="date"
+                  name="date"
+                  min={getTodayIsoDate()}
+                  type="date"
+                  value={form.date}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="ve-field">
+                <label>Time Slot</label>
+                <div className="ve-slots">
+                  {!canCheckAvailability ? (
+                    <span className="ve-muted">Select a service and date first.</span>
+                  ) : slotLoading ? (
+                    <span className="ve-muted">Checking availability...</span>
+                  ) : slots.length === 0 ? (
+                    <span className="ve-muted">No open slots for this date.</span>
+                  ) : (
+                    slots.map((slot) => (
+                      <button
+                        key={slot}
+                        className={`ve-slot ${form.time === slot ? 'active' : ''}`}
+                        onClick={() => setForm((current) => ({ ...current, time: slot }))}
+                        type="button"
+                      >
+                        {formatTime(slot)}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="ve-field">
+              <label htmlFor="notes">Notes</label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Symptoms, concerns, or instructions for the clinic"
+              />
+            </div>
+
+            <div className="ve-actions">
+              <button className="ve-btn ve-btn-primary" disabled={!canSubmit || submitting} type="submit">
+                {submitting ? 'Submitting...' : 'Submit Booking'}
+              </button>
+              <button
+                className="ve-btn ve-btn-ghost"
+                disabled={!canCheckAvailability || slotLoading}
+                onClick={() => loadAvailability(form.date, form.serviceId)}
+                type="button"
+              >
+                Refresh Slots
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <aside className="ve-card">
+          <div className="ve-section-head">
+            <div>
+              <h3 className="ve-card-title">Booking Preview</h3>
+              <p className="ve-section-copy">A quick check before you submit.</p>
+            </div>
           </div>
 
-          <div className="ve-field">
-            <label>Notes (symptoms/concerns)</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
+          <div className="ve-detail-list">
+            <div className="ve-detail-row">
+              <span>Selected Pet</span>
+              <strong>{selectedPet?.name || 'None yet'}</strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Service</span>
+              <strong>{selectedService?.name || 'None yet'}</strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Date</span>
+              <strong>{form.date || 'Not selected'}</strong>
+            </div>
+            <div className="ve-detail-row">
+              <span>Time</span>
+              <strong>{form.time ? formatTime(form.time) : 'Not selected'}</strong>
+            </div>
           </div>
 
-          <div className="ve-actions">
-            <button className="ve-btn ve-btn-primary" type="submit" disabled={!canSubmit}>
-              Submit Booking
-            </button>
-            <button className="ve-btn ve-btn-ghost" type="button" onClick={checkAvailability} disabled={!canCheck}>
-              Refresh Availability
-            </button>
+          <div className="ve-copy-block ve-copy-block--accent">
+            <p>{bookingSummary}</p>
+            <p>Submitted bookings start with a pending status until the clinic confirms them.</p>
           </div>
-        </form>
+        </aside>
       </div>
     </div>
   );
 }
-
