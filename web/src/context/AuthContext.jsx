@@ -1,11 +1,24 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { authAPI } from '../services/api';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+
+    if (!savedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(savedUser);
+    } catch {
+      localStorage.removeItem('user');
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,23 +30,61 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     const hydrate = async () => {
+      if (!token) {
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setLoading(true);
+      }
+
       try {
-        if (!token) return;
-        const me = await authAPI.getCurrentUser();
-        setUser(me.data);
+        const response = await authAPI.getCurrentUser();
+
+        if (isMounted) {
+          setUser((currentUser) => ({
+            token,
+            ...currentUser,
+            ...response.data,
+          }));
+        }
       } catch {
-        setUser(null);
-        setToken(null);
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    hydrate().finally(() => setLoading(false));
-  }, []);
+    hydrate();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   const login = useCallback((loginData) => {
-    setUser(loginData);
     setToken(loginData.token);
+    setUser(loginData);
   }, []);
 
   const logout = useCallback(() => {
@@ -41,11 +92,17 @@ export function AuthProvider({ children }) {
     setToken(null);
   }, []);
 
-  const isAuthenticated = !!token;
-
-  return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, isAuthenticated }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      loading,
+      login,
+      logout,
+      isAuthenticated: Boolean(token),
+    }),
+    [login, loading, logout, token, user],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

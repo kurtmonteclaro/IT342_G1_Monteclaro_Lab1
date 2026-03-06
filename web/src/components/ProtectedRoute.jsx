@@ -6,7 +6,12 @@ export function ProtectedRoute({ children, requiredRole }) {
   const auth = useContext(AuthContext);
 
   if (auth.loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="page-loader">
+        <div className="page-loader__orb" />
+        <p>Loading VetEase...</p>
+      </div>
+    );
   }
 
   if (!auth.isAuthenticated) {

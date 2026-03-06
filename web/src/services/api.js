@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
+const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,17 +12,23 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
+
+export const apiConfig = {
+  baseUrl: API_URL,
+  origin: API_ORIGIN,
+};
 
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getCurrentUser: () => api.get('/user/me'),
-  loginWithGoogle: (idToken) => api.post('/auth/oauth/google', { idToken }),
 };
 
 export const petAPI = {
@@ -29,13 +36,6 @@ export const petAPI = {
   create: (data) => api.post('/pets', data),
   update: (id, data) => api.put(`/pets/${id}`, data),
   remove: (id) => api.delete(`/pets/${id}`),
-  uploadPhoto: (id, file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post(`/pets/${id}/upload-photo`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
 };
 
 export const serviceAPI = {
@@ -62,10 +62,6 @@ export const adminAPI = {
   listBlockedDates: () => api.get('/admin/blocked-dates'),
   addBlockedDate: (date) => api.post('/admin/blocked-dates', null, { params: { date } }),
   removeBlockedDate: (id) => api.delete(`/admin/blocked-dates/${id}`),
-};
-
-export const externalAPI = {
-  dogBreeds: () => api.get('/external/dog-breeds'),
 };
 
 export default api;
