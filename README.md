@@ -2,173 +2,155 @@
 
 ## Project Overview
 
-Full-stack user registration and authentication application with:
-- **Backend**: Spring Boot REST API with JWT
-- **Web**: React SPA with dark copper theme
-- **Mobile**: Android app (Kotlin) with matching UI
+Full-stack veterinary scheduling system with:
+- **Backend**: Spring Boot REST API (JWT + Google OAuth)
+- **Web**: React + Vite (responsive dashboard and public landing page)
+- **Mobile**: Android app (Kotlin)
 
-Authentication uses **username** for login (email remains for registration/profile).
+Core users:
+- **Client** (pet owner): manage pets, book appointments, track status
+- **Admin**: review requests, manage clinic settings and blocked dates
 
 ## Technology Stack
 
 ### Backend
-- **Framework**: Spring Boot
-- **Database**: MySQL 8.0
-- **Security**: Spring Security + JWT
-- **Password Encryption**: BCrypt
-- **ORM**: Spring Data JPA / Hibernate
-- **Language**: Java 21
+- Java 21
+- Spring Boot 4.0.2
+- Spring Security + JWT
+- Spring OAuth2 Client (Google sign-in)
+- Spring Data JPA / Hibernate
+- MySQL
 
-### Frontend (Web)
-- **Framework**: React 19 + Vite
-- **Router**: React Router 6
-- **HTTP Client**: Axios
-- **Styling**: CSS3, dark copper theme (#0f0f12, #c67c4e), Outfit font
+### Web Frontend
+- React 19 + Vite
+- React Router
+- Axios
+- Custom CSS styling (pet-owner focused dark warm theme)
 
 ### Mobile
-- **Platform**: Android
-- **Language**: Kotlin
-- **HTTP**: Retrofit + Gson
-- **UI**: Material3 Dark, copper accent theme
+- Kotlin
+- Retrofit + Gson
+- Material3 dark theme
 
 ## Project Structure
 
-```
+```text
 IT342_G1_Monteclaro_Lab1/
-├── backend/                 # Spring Boot API
-│   ├── src/main/java/.../
-│   │   ├── controller/     # AuthController, UserController
-│   │   ├── service/        # AuthenticationService, JwtTokenProvider
-│   │   ├── model/          # User entity
-│   │   ├── dto/            # RegisterRequest, LoginRequest, etc.
-│   │   ├── repository/     # UserRepository
-│   │   └── security/       # JWT filter, SecurityConfig
-│   └── src/main/resources/
-├── web/                    # React application
-│   └── src/
-│       ├── pages/          # Login, Register, Dashboard
-│       ├── context/        # AuthContext
-│       └── services/       # API service
-├── mobile/                 # Android app
-│   └── app/src/main/
-│       ├── java/.../       # LoginActivity, RegisterActivity, DashboardActivity
-│       ├── res/            # layouts, colors, themes
-│       └── network/        # RetrofitClient, AuthApiService
-└── docs/                   # Documentation
+|- backend/
+|  |- src/main/java/com/it342/g1/backend/
+|  |  |- controller/
+|  |  |- service/
+|  |  |- security/
+|  |  |- model/
+|  |  |- repository/
+|  |  |- dto/
+|  |- src/main/resources/application.properties
+|- web/
+|  |- src/
+|  |  |- pages/
+|  |  |- components/
+|  |  |- context/
+|  |  |- services/
+|- mobile/
+|- docs/
+|- README.md
+|- TASK_CHECKLIST.md
+|- IMPLEMENTATION_SUMMARY.md
 ```
 
-## Features Implemented
+## Implemented Features
 
 ### Authentication
-- User registration (username, email, firstName, lastName, password)
-- Login with **username** and password
-- JWT token storage (localStorage for web, SharedPreferences for mobile)
-- Protected dashboard with profile info
-- Logout
+- Register with username/email/password
+- Login with username/password
+- JWT-based protected API access
+- Google OAuth login flow integrated into web login/register pages
+- Auto account creation/linking for Google-authenticated users
 
-### Pages
-- **Register**: First Name, Last Name, Username, Email, Password
-- **Login**: Username, Password
-- **Dashboard**: Username, First Name, Last Name, Email, Logout
+### Web
+- Public landing page at `/`
+- Login and Register pages with Google button
+- Protected dashboard with sidebar shell
+- Pet profile management (create, update, delete)
+- Service listing
+- Appointment booking, cancellation, rescheduling
+- Appointment history
+- Admin panel for approvals and clinic settings
 
-### UI Theme
-- Dark background (#0f0f12)
-- Copper accent (#c67c4e)
-- Outfit font (web)
-- Consistent styling across web and mobile
+### Backend API
+- `/api/auth/register`
+- `/api/auth/login`
+- `/api/user/me`
+- `/api/pets/**`
+- `/api/services`
+- `/api/appointments/**`
+- `/api/admin/**`
+- OAuth endpoints: `/oauth2/authorization/google`, `/login/oauth2/code/google`
 
-## Setup & Installation
+## Setup
 
-### Prerequisites
+## 1) Prerequisites
 - JDK 21+
-- Node.js 18+ and npm
-- MySQL 8.0 (or XAMPP)
-- Android Studio (for mobile)
+- Node.js 18+
+- MySQL running locally
 
-### 1. Database (XAMPP)
-1. Start XAMPP Control Panel
-2. Start **MySQL**
-3. Create database: `CREATE DATABASE it342_lab1;` (or via phpMyAdmin)
+## 2) Database
+Create database:
 
-### 2. Backend
+```sql
+CREATE DATABASE it342_lab1;
+```
+
+## 3) Backend
+
+Update `backend/src/main/resources/application.properties` as needed for your MySQL credentials.
+
+Run:
+
 ```bash
 cd backend
-# Edit application.properties if MySQL password differs
 .\mvnw spring-boot:run
 ```
-Backend runs on `http://localhost:8080`
 
-### 3. Web Frontend
+Backend default URL: `http://localhost:8080`
+
+## 4) Web
+
 ```bash
 cd web
 npm install
 npm run dev
 ```
-Web runs on `http://localhost:5173`
 
-### 4. Mobile
-1. Open **Android Studio**
-2. **File → Open** → select `mobile` folder
-3. Wait for Gradle sync
-4. Run on emulator or device
+Web default URL: `http://localhost:5173`
 
-**Note**: For a physical device, ensure it’s on the same network and update the base URL in `RetrofitClient.kt` to your PC’s IP (e.g. `http://192.168.1.x:8080/`). Emulator uses `10.0.2.2:8080`.
+## Google OAuth Setup (Web)
 
-## API Reference
+Create a Google OAuth **Web application** client and configure:
 
-### Register
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "email": "john@example.com",
-    "password": "password123",
-    "firstName": "John",
-    "lastName": "Doe"
-  }'
-```
+- **Authorized redirect URI**:
+  - `http://localhost:8080/login/oauth2/code/google`
+- **Authorized JavaScript origins**:
+  - `http://localhost:8080`
+  - `http://localhost:5173`
 
-### Login
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "password": "password123"
-  }'
-```
+Keep secrets out of git. Use environment variables:
 
-### Get Profile (authenticated)
-```bash
-curl -X GET http://localhost:8080/api/user/me \
-  -H "Authorization: Bearer <token>"
-```
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
-## Database Schema
+`application.properties` already supports env placeholders:
 
-```sql
-CREATE TABLE users (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(255) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+- `spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID:replace-me}`
+- `spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET:replace-me}`
 
-## Troubleshooting
+## Notes
 
-| Issue | Solution |
-|-------|----------|
-| MySQL connection failed | Start XAMPP MySQL; verify credentials in `application.properties` |
-| CORS errors | Backend allows `http://localhost:5173`; ensure backend is running |
-| Mobile can't reach API | Emulator: use `10.0.2.2:8080`. Device: use your PC's LAN IP |
-| JWT expired | Tokens last 24 hours; log in again |
+- Do not commit real OAuth client secret values.
+- CORS is configured for `http://localhost:5173`.
+- Hibernate is set to `ddl-auto=update`.
 
-## Team
-- **Group**: G1
-- **Member**: Monteclaro
-- **Subject**: IT342
+## Recent Major Updates
+
+- `b4a50fd`: web landing page + visual refresh
+- `0565107`: Google OAuth login flow + auth UI polish

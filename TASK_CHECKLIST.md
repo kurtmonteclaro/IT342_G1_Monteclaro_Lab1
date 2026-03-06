@@ -1,102 +1,71 @@
 # Task Checklist - IT342 Lab 1
 
-## DONE ✅
+## Completed
 
-### Backend Implementation
-- [x] Add Spring Security and JWT dependencies to pom.xml
-- [x] Configure MySQL database connection in application.properties
-- [x] Create User entity with JPA annotations (includes username, email)
-- [x] Create DTOs (RegisterRequest, LoginRequest, LoginResponse, UserDto) with username support
-- [x] Create UserRepository with custom queries (findByEmail, findByUsername, existsByEmail, existsByUsername)
-- [x] Implement AuthenticationService with registration and login logic (username-based login)
-- [x] Create JwtTokenProvider for token generation and validation
-- [x] Implement JwtAuthenticationFilter for request processing
-- [x] Configure SecurityConfig with CORS and authentication rules
-- [x] Create AuthController with /api/auth/register and /api/auth/login endpoints
-- [x] Create UserController with /api/user/me endpoint
-- [x] Add Lombok dependency and annotations
+### Backend
+- [x] Spring Boot + Spring Security + JWT setup
+- [x] MySQL configuration and JPA integration
+- [x] User authentication endpoints (`/api/auth/register`, `/api/auth/login`)
+- [x] JWT token generation and validation
+- [x] Protected endpoint for current user (`/api/user/me`)
+- [x] Pet, service, appointment, and admin endpoint implementation
+- [x] Role-aware behavior for client/admin workflows
+- [x] Google OAuth2 backend integration
+- [x] OAuth success/failure handlers and JWT handoff to frontend
+- [x] User model extension for auth provider and Google account linking
 
-### Frontend (Web) Implementation
-- [x] Add React Router and Axios dependencies to package.json
-- [x] Create AuthContext for state management
-- [x] Create API service with Axios interceptor for JWT tokens
-- [x] Create ProtectedRoute component for route protection
-- [x] Create Register page with First Name, Last Name, Username, Email, Password
-- [x] Create Login page with Username and Password (username-based login)
-- [x] Create Dashboard/Profile page with user info (username, firstName, lastName, email)
-- [x] Create Auth.css with dark copper theme styling
-- [x] Create Dashboard.css with dark copper theme styling
-- [x] Update App.jsx with routing configuration
-- [x] Dark copper UI theme (background #0f0f12, accent #c67c4e, Outfit font)
-
-### Mobile App Implementation
-- [x] Android project structure with Kotlin
-- [x] Retrofit + Gson for API communication
-- [x] AuthModels with username (RegisterRequest, LoginRequest, LoginResponse, UserDto)
-- [x] AuthApiService (register, login, getCurrentUser)
-- [x] LoginActivity with username-based login
-- [x] RegisterActivity with username field
-- [x] DashboardActivity fetching /api/user/me with profile display
-- [x] Dark copper UI theme matching web
-- [x] Token storage in SharedPreferences
+### Web Frontend
+- [x] Routing with protected routes
+- [x] Auth context + JWT persistence
+- [x] Login/Register pages (username/password)
+- [x] Google sign-in button on Login
+- [x] Google sign-in button on Register
+- [x] OAuth callback page (`/oauth/callback`)
+- [x] Public landing page at `/`
+- [x] App shell and dashboard UI refresh
+- [x] Pet profiles, services, bookings, appointment history UI
+- [x] Admin panel UI for approvals/settings/blocked dates
+- [x] Auth page layout fix and visual consistency improvements
 
 ### Documentation
-- [x] Created README.md with setup instructions
-- [x] Created TASK_CHECKLIST.md
+- [x] README updated with current architecture and OAuth setup
+- [x] TASK_CHECKLIST updated
+- [x] IMPLEMENTATION_SUMMARY updated
 
-## IN-PROGRESS 🔄
+## In Progress
+- [ ] None
 
-(None)
+## Remaining / Future Work
 
-## TODO 📋
+### Testing
+- [ ] Backend unit tests for authentication and appointment logic
+- [ ] Integration tests for key API flows
+- [ ] Frontend component/integration tests
+- [ ] End-to-end test coverage for login, booking, admin actions
 
-### Testing & Deployment
-- [ ] Unit tests for authentication service
-- [ ] Integration tests for API endpoints
-- [ ] Frontend component testing
-- [ ] End-to-end testing
-- [ ] Security audit
+### Security / Production Readiness
+- [ ] Move JWT secret to environment-only configuration
+- [ ] Add refresh token strategy
+- [ ] Add rate limiting and auth abuse protection
+- [ ] Review session/cookie strategy for OAuth production use
 
-### Documentation (FRS)
-- [ ] Create Entity Relationship Diagram (ERD)
-- [ ] Update UML diagrams
-- [ ] Capture screenshots of Register, Login, Dashboard (web + mobile)
-- [ ] Create PDFs of FRS documentation in /docs folder
+### Features
+- [ ] Email verification and password reset
+- [ ] User profile edit endpoint/UI
+- [ ] Uploadable pet photo support
+- [ ] Notification/reminder flow
 
-### Additional Features
-- [ ] Email verification for registration
-- [ ] Password reset functionality
-- [ ] User profile update endpoint
-- [ ] Role-based access control (RBAC)
-- [ ] Refresh token implementation
-- [ ] API documentation with Swagger/OpenAPI
+### Documentation Deliverables
+- [ ] ERD and UML updates in `/docs`
+- [ ] Updated screenshots for web and mobile flows
+- [ ] FRS PDF updates
 
-### Deployment
-- [ ] Set up CI/CD pipeline
-- [ ] Deploy backend to cloud
-- [ ] Deploy frontend to static hosting
-- [ ] Configure production environment variables
+## Run Checklist
 
-## Progress Summary
-
-**Total Tasks**: ~50
-**Completed**: 35+ (70%+)
-**In Progress**: 0
-**To Do**: 15
-
-## Notes
-
-- Backend API is fully functional with JWT authentication
-- Login uses **username** (not email); register includes username field
-- Web and mobile share dark copper UI theme (#0f0f12 background, #c67c4e accent)
-- Frontend (React) and mobile (Android) both connect to backend API
-- Database schema is auto-created by Hibernate (ddl-auto=update)
-- CORS configured for http://localhost:5173 (web)
-- Mobile emulator uses 10.0.2.2:8080; physical device needs host machine IP
-
-## How to Run
-
-1. **XAMPP**: Start MySQL
-2. **Backend**: `cd backend` → `.\mvnw spring-boot:run`
-3. **Web**: `cd web` → `npm install` → `npm run dev`
-4. **Mobile**: Open `mobile` folder in Android Studio → Run on device/emulator
+1. Start MySQL and ensure `it342_lab1` exists.
+2. Start backend (`cd backend`, `.\mvnw spring-boot:run`).
+3. Start web (`cd web`, `npm install`, `npm run dev`).
+4. For Google OAuth, configure:
+   - Redirect URI: `http://localhost:8080/login/oauth2/code/google`
+   - JS Origins: `http://localhost:8080`, `http://localhost:5173`
+   - Env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
