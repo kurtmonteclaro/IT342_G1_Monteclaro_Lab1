@@ -1,23 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 :root {
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #f7f0e8;
+  color: #f8f3ec;
   background: #120f0d;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --font-display: 'Space Grotesk', 'Nunito', 'Segoe UI', sans-serif;
   --bg-base: #120f0d;
-  --bg-elevated: rgba(27, 22, 19, 0.92);
+  --bg-elevated: rgba(27, 22, 19, 0.9);
   --bg-soft: rgba(255, 255, 255, 0.04);
-  --surface-border: rgba(255, 255, 255, 0.08);
-  --surface-border-strong: rgba(207, 150, 106, 0.24);
-  --text-main: #f7f0e8;
-  --text-muted: #c7b4a4;
-  --text-faint: #927e6d;
-  --accent: #cf966a;
-  --accent-strong: #e7af82;
+  --surface-border: rgba(255, 255, 255, 0.09);
+  --surface-border-strong: rgba(231, 168, 119, 0.26);
+  --text-main: #f8f3ec;
+  --text-muted: #d3c1b2;
+  --text-faint: #9c8978;
+  --accent: #d79d6f;
+  --accent-strong: #efb98d;
   --danger: #ef8d88;
   --success: #85d8a7;
   --info: #8eb9ff;
@@ -39,9 +42,9 @@ body {
   min-height: 100vh;
   color: var(--text-main);
   background:
-    radial-gradient(circle at top left, rgba(207, 150, 106, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(92, 140, 117, 0.12), transparent 22%),
-    linear-gradient(180deg, #17120f 0%, #120f0d 48%, #0c0908 100%);
+    radial-gradient(circle at top left, rgba(207, 150, 106, 0.2), transparent 30%),
+    radial-gradient(circle at top right, rgba(98, 178, 152, 0.12), transparent 22%),
+    linear-gradient(180deg, #191311 0%, #120f0d 50%, #0b0908 100%);
 }
 
 button,
@@ -53,6 +56,13 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
 }
 
 a {

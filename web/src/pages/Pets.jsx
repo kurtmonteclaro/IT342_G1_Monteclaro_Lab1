@@ -245,8 +245,8 @@ export function Pets() {
                     <div className="ve-list-title">{pet.name}</div>
                     <div className="ve-list-meta">
                       {pet.species || 'Pet'}
-                      {pet.breed ? ` · ${pet.breed}` : ''}
-                      {pet.age !== null && pet.age !== '' && pet.age !== undefined ? ` · ${pet.age} yrs` : ''}
+                      {pet.breed ? ` - ${pet.breed}` : ''}
+                      {pet.age !== null && pet.age !== '' && pet.age !== undefined ? ` - ${pet.age} yrs` : ''}
                     </div>
                     {(pet.notes || pet.vaccineHistory) && (
                       <div className="ve-copy-block">
@@ -272,3 +272,4 @@ export function Pets() {
     </div>
   );
 }
+

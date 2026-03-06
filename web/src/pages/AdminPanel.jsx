@@ -148,7 +148,7 @@ export function AdminPanel() {
                     </div>
                     <div className="ve-rowmeta">{formatDateTime(appointment.date, appointment.time)}</div>
                     <div className="ve-rowmeta">
-                      {appointment.client?.firstName} {appointment.client?.lastName} · {appointment.client?.email}
+                      {appointment.client?.firstName} {appointment.client?.lastName} - {appointment.client?.email}
                     </div>
                   </div>
                   <div className={`ve-status ${getStatusTone(appointment.status)}`}>
@@ -199,7 +199,7 @@ export function AdminPanel() {
                       {appointment.service?.name} for {appointment.pet?.name}
                     </div>
                     <div className="ve-rowmeta">
-                      {appointment.client?.firstName} {appointment.client?.lastName} · {appointment.client?.username}
+                      {appointment.client?.firstName} {appointment.client?.lastName} - {appointment.client?.username}
                     </div>
                     {appointment.notes && <div className="ve-rowmeta ve-rowmeta--notes">{appointment.notes}</div>}
                   </div>
@@ -358,3 +358,4 @@ export function AdminPanel() {
     </div>
   );
 }
+

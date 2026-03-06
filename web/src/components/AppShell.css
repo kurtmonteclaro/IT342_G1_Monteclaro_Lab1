@@ -2,6 +2,9 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 185, 130, 0.09), transparent 30%),
+    transparent;
 }
 
 .shell-sidebar {
@@ -13,7 +16,7 @@
   flex-direction: column;
   gap: 1rem;
   background:
-    linear-gradient(180deg, rgba(33, 25, 22, 0.98), rgba(18, 14, 12, 0.96)),
+    linear-gradient(180deg, rgba(35, 27, 23, 0.98), rgba(18, 14, 12, 0.95)),
     var(--bg-base);
   border-right: 1px solid var(--surface-border);
 }
@@ -22,7 +25,7 @@
 .shell-panel,
 .shell-topbar-card {
   border: 1px solid var(--surface-border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
 }
 
@@ -82,14 +85,15 @@
   border-radius: 1rem;
   color: var(--text-muted);
   border: 1px solid transparent;
-  transition: 180ms ease;
+  transition: 180ms ease, transform 180ms ease;
 }
 
 .shell-link:hover,
 .shell-link.active {
   color: var(--text-main);
   border-color: var(--surface-border-strong);
-  background: rgba(207, 150, 106, 0.1);
+  background: rgba(215, 157, 111, 0.12);
+  transform: translateX(2px);
 }
 
 .shell-user {
@@ -150,6 +154,7 @@
 .shell-topbar-title {
   margin: 0.25rem 0 0;
   font-size: clamp(1.8rem, 4vw, 2.4rem);
+  letter-spacing: -0.02em;
 }
 
 .shell-topbar-card {
@@ -179,6 +184,7 @@
   .shell-sidebar {
     position: static;
     height: auto;
+    gap: 0.85rem;
   }
 }
 
@@ -196,5 +202,16 @@
   .shell-topbar-card {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .shell-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+  }
+
+  .shell-link {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }

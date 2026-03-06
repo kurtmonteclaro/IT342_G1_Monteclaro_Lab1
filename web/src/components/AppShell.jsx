@@ -70,7 +70,7 @@ export function AppShell() {
                 {auth.user?.firstName} {auth.user?.lastName}
               </div>
               <div className="shell-user-meta">
-                {auth.user?.username} · {role}
+                {auth.user?.username} - {role}
               </div>
             </div>
           </div>

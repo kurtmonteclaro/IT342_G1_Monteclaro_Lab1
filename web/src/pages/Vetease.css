@@ -1,6 +1,7 @@
 .ve-page {
   display: grid;
   gap: 1.5rem;
+  animation: veFadeIn 260ms ease;
 }
 
 .ve-header,
@@ -15,6 +16,7 @@
 .ve-card-title {
   margin: 0;
   letter-spacing: -0.03em;
+  font-family: var(--font-display);
 }
 
 .ve-title {
@@ -41,7 +43,7 @@
 .ve-stat-card,
 .ve-service {
   border: 1px solid var(--surface-border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.035);
   backdrop-filter: blur(10px);
 }
 
@@ -54,6 +56,7 @@
   background:
     radial-gradient(circle at top right, rgba(207, 150, 106, 0.16), transparent 30%),
     linear-gradient(140deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
 }
 
 .ve-hero--compact {
@@ -139,6 +142,13 @@
 .ve-stat-card {
   padding: 1.2rem;
   border-radius: 1.3rem;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.ve-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--surface-border-strong);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .ve-stat-card strong {
@@ -225,6 +235,7 @@
   border: 1px solid var(--surface-border);
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.03);
+  font-weight: 700;
 }
 
 .ve-btn:disabled,
@@ -246,6 +257,7 @@
 
 .ve-link {
   color: var(--accent-strong);
+  font-weight: 700;
 }
 
 .ve-table,
@@ -260,6 +272,13 @@
   border-radius: 1.2rem;
   border: 1px solid var(--surface-border);
   background: rgba(255, 255, 255, 0.025);
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.ve-rowline:hover,
+.ve-list-item:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .ve-rowline {
@@ -374,6 +393,12 @@
 .ve-service {
   padding: 1.3rem;
   border-radius: 1.4rem;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.ve-service:hover {
+  transform: translateY(-2px);
+  border-color: var(--surface-border-strong);
 }
 
 .ve-service-top {
@@ -468,6 +493,17 @@
 .ve-copy-block--accent {
   background: rgba(207, 150, 106, 0.08);
   border: 1px solid rgba(207, 150, 106, 0.18);
+}
+
+@keyframes veFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 1200px) {
